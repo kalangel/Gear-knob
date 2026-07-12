@@ -175,7 +175,7 @@ export const DICT = {
         { label: "Korrekturen", value: "Inklusive" },
         { label: "Startpreis", value: "ab 690 €" },
       ],
-      punchline: "Vom Briefing zum Launch — in zwei Wochen.",
+      punchline: "Vom Briefing zum Launch — in unter zwei Wochen.",
     },
     contact: {
       eyebrow: "Fünfter Gang / Eingelegt",
@@ -315,7 +315,7 @@ export const DICT = {
         { label: "Правки", value: "Включены" },
         { label: "Старт", value: "от 690 €" },
       ],
-      punchline: "От брифа до запуска — за две недели.",
+      punchline: "От брифа до запуска — меньше двух недель.",
     },
     contact: {
       eyebrow: "Пятая передача / Включена",

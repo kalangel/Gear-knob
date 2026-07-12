@@ -242,17 +242,37 @@ function Specs({ title, items }: { title: string; items: { label: string; value:
   );
 }
 
+/* ---------- chassis screw: tiny machined bolt for the display corners ---------- */
+
+function Screw({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute z-20 h-2.5 w-2.5 rounded-full border border-white/15 bg-[#16181c] shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] ${className}`}
+    >
+      <span className="absolute left-1/2 top-1/2 h-px w-1.5 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-white/25" />
+    </span>
+  );
+}
+
 /* ---------- section ---------- */
 
 export function Experience() {
   const { t } = useLang();
+  const reduced = useReducedMotion();
+  const [punchLead, punchTail] = t.experience.punchline.split(" — ");
 
   return (
     <section id="experience" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 py-20 md:py-28">
       <SectionHeading gear="4" eyebrow={t.experience.eyebrow} title={t.experience.title} />
 
       <Reveal>
-        <div className="chrome-ring rounded-[28px] p-1">
+        <div className="chrome-ring relative rounded-[28px] p-1">
+          {/* underglow — neon beneath the chassis */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-12 -bottom-7 h-14 rounded-[50%] bg-[var(--glow)] opacity-30 blur-2xl"
+          />
           {/* the in-car display */}
           <div className="relative overflow-hidden rounded-[24px] bg-[#07080b]">
             {/* screen glass: subtle scanlines + top sheen */}
@@ -269,8 +289,24 @@ export function Experience() {
               className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-white/[0.04] to-transparent"
             />
 
+            {/* machined corner bolts */}
+            <Screw className="left-3 top-3" />
+            <Screw className="right-3 top-3" />
+            <Screw className="bottom-3 left-3" />
+            <Screw className="bottom-3 right-3" />
+
             {/* status bar */}
             <div className="relative flex items-center justify-between border-b border-white/8 px-6 py-4 md:px-10">
+              {/* redline sweep running along the bottom edge */}
+              <div aria-hidden className="absolute inset-x-0 -bottom-px h-px overflow-hidden">
+                {!reduced && (
+                  <motion.div
+                    className="h-full w-1/4 bg-gradient-to-r from-transparent via-accent/80 to-transparent"
+                    animate={{ x: ["-120%", "520%"] }}
+                    transition={{ duration: 3.4, repeat: Infinity, repeatDelay: 1.8, ease: "linear" }}
+                  />
+                )}
+              </div>
               <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest2 text-muted">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse-led" />
                 {t.experience.board}
@@ -297,21 +333,59 @@ export function Experience() {
         </div>
       </Reveal>
 
-      {/* inView on the wrapper — the line starts translated outside the overflow clip */}
+      {/* finish line — inView on the wrapper, the line starts translated outside the overflow clip */}
       <motion.div
-        className="mt-12 overflow-hidden md:mt-16"
+        className="relative mt-14 md:mt-20"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-10%" }}
       >
-        <motion.p
-          key={t.experience.punchline}
-          variants={{ hidden: { y: "110%" }, visible: { y: "0%" } }}
-          transition={{ duration: 0.9, ease: EASE }}
-          className="text-center font-display text-3xl font-bold uppercase tracking-tight text-metal md:text-5xl"
-        >
-          {t.experience.punchline}
-        </motion.p>
+        {/* speed hairlines flanking the statement */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-1/2 hidden h-px w-[16%] -translate-y-1/2 bg-gradient-to-r from-transparent via-white/15 to-accent/60 md:block"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-1/2 hidden h-px w-[16%] -translate-y-1/2 bg-gradient-to-l from-transparent via-white/15 to-accent/60 md:block"
+        />
+
+        <div className="overflow-hidden">
+          <motion.p
+            key={t.experience.punchline}
+            variants={{ hidden: { y: "110%" }, visible: { y: "0%" } }}
+            transition={{ duration: 0.9, ease: EASE }}
+            className="text-center font-display text-3xl font-bold uppercase tracking-tight text-metal md:text-5xl"
+          >
+            {punchLead}
+            {punchTail && (
+              <>
+                {" — "}
+                <span className="text-accent-glow">{punchTail}</span>
+              </>
+            )}
+          </motion.p>
+        </div>
+
+        {/* speed streak */}
+        <motion.div
+          aria-hidden
+          variants={{ hidden: { scaleX: 0, opacity: 0 }, visible: { scaleX: 1, opacity: 1 } }}
+          transition={{ duration: 1.1, delay: 0.35, ease: EASE }}
+          className="mx-auto mt-6 h-[3px] w-44 origin-left rounded-full bg-gradient-to-r from-accent via-accent to-transparent shadow-[0_0_18px_var(--glow)] md:w-60"
+        />
+
+        {/* checkered finish strip */}
+        <motion.div
+          aria-hidden
+          variants={{ hidden: { opacity: 0 }, visible: { opacity: 0.35 } }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mx-auto mt-3 h-2 w-28 [mask-image:linear-gradient(90deg,transparent,black_25%,black_75%,transparent)] md:w-36"
+          style={{
+            backgroundImage: "repeating-conic-gradient(rgba(255,255,255,0.9) 0% 25%, transparent 0% 50%)",
+            backgroundSize: "8px 8px",
+          }}
+        />
       </motion.div>
     </section>
   );
