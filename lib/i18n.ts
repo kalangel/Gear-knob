@@ -100,11 +100,7 @@ export const DICT = {
       eyebrow: "Erster Gang / Eingelegt",
       title: "Gebaut für Bewegung",
       statement: [
-        { text: "Ich gestalte und entwickle Interfaces so, wie große Maschinen gebaut werden — " },
-        { text: "jedes Detail trägt Last", accent: "metal" },
-        { text: ", jede Bewegung ist " },
-        { text: "bewusst gesetzt", accent: "blue" },
-        { text: " — nichts Dekoratives, das seinen Platz nicht verdient." },
+        { text: "Ich gestalte und entwickle Interfaces, die klar, schnell und angenehm zu bedienen sind." },
       ],
       body:
         "Frontend-Entwickler und UI/UX-Designer. Ich bringe Produkte von der leeren Leinwand zu einem Interface, das man nicht vergisst — mit Design-System-Denken, akribischem Motion-Handwerk und Performance-Budgets, die niemals reißen.",
@@ -249,11 +245,7 @@ export const DICT = {
       eyebrow: "Первая передача / Включена",
       title: "Создан для движения",
       statement: [
-        { text: "Я проектирую и собираю интерфейсы так, как строят точные машины — " },
-        { text: "каждая деталь несёт нагрузку", accent: "metal" },
-        { text: ", каждое движение " },
-        { text: "осознанно", accent: "blue" },
-        { text: " — и ничто декоративное не остаётся без причины." },
+        { text: "Я проектирую и разрабатываю интерфейсы, которые работают чётко, быстро и удобно." },
       ],
       body:
         "Frontend-разработчик и UI/UX-дизайнер. Довожу продукты от пустого холста до интерфейса, который запоминают, — через мышление дизайн-системами, дотошный моушн и performance-бюджеты, которые никогда не срываются.",
