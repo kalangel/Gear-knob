@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from "@react-three/fiber";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
@@ -116,13 +116,13 @@ function GateLabel({
   active: boolean;
 }) {
   const tex = useMemo(() => {
-    const color = active ? (char === "R" ? ACCENT_RED : ACCENT) : SILVER;
+    const color = active ? (char === "R" ? ACCENT_RED : ACCENT) : "#c8cedb";
     return makeLabelTexture(char, color, active);
   }, [char, active]);
   useEffect(() => () => tex.dispose(), [tex]);
   return (
     <mesh position={[x, 0.101, z]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[0.3, 0.3]} />
+      <planeGeometry args={[0.44, 0.44]} />
       <meshBasicMaterial map={tex} transparent depthWrite={false} />
     </mesh>
   );
@@ -139,7 +139,13 @@ function StickModel() {
 
   const scene = useMemo(() => {
     const s = gltf.scene;
-    // Auto-normalize: высота ~2.05, основание на уровне пластины
+    // Auto-normalize: высота ~2.05, основание на уровне пластины.
+    // useLoader кэширует scene, а useMemo в dev вызывается дважды —
+    // поэтому сначала сбрасываем трансформы (иначе повторный прогон
+    // мерил бы уже отмасштабированный бокс и «топил» модель под плату).
+    s.scale.set(1, 1, 1);
+    s.position.set(0, 0, 0);
+    s.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(s);
     const size = box.getSize(new THREE.Vector3());
     s.scale.setScalar(2.05 / Math.max(size.y, 1e-4));
@@ -174,6 +180,10 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   const route = useRef<THREE.Vector2[]>([]);
   const prevGear = useRef<Gear>(active);
 
+  // Manual drag: while the hand is on the knob, the pointer wins over scroll
+  const dragging = useRef(false);
+  const dragPt = useRef(new THREE.Vector2(...SLOT[active]));
+
   // Re-route through the neutral rail whenever the gear changes
   useEffect(() => {
     if (prevGear.current === active) return;
@@ -190,9 +200,12 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     const d = Math.min(dt, 1 / 30);
     const t = state.clock.elapsedTime;
 
-    // Waypoint spring (slightly underdamped → mechanical "snick")
-    const target = route.current[0] ?? new THREE.Vector2(...SLOT[active]);
-    const k = route.current.length > 1 ? 140 : 90;
+    // Waypoint spring (slightly underdamped → mechanical "snick");
+    // during a drag the knob chases the pointer with a stiffer spring
+    const target = dragging.current
+      ? dragPt.current
+      : route.current[0] ?? new THREE.Vector2(...SLOT[active]);
+    const k = dragging.current ? 260 : route.current.length > 1 ? 140 : 90;
     vel.current.x += (target.x - pos.current.x) * k * d;
     vel.current.y += (target.y - pos.current.y) * k * d;
     const damp = Math.exp(-13 * d);
@@ -200,6 +213,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     pos.current.x += vel.current.x * d;
     pos.current.y += vel.current.y * d;
     if (
+      !dragging.current &&
       route.current.length > 1 &&
       Math.abs(target.x - pos.current.x) < 0.06 &&
       Math.abs(target.y - pos.current.y) < 0.06
@@ -345,8 +359,53 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   const knobTex = useMemo(() => makeKnobTexture(), []);
   useEffect(() => () => knobTex.dispose(), [knobTex]);
 
-  const setCursor = (on: boolean) => {
-    document.body.style.cursor = on ? "pointer" : "";
+  /* --------------------------- manual drag --------------------------- */
+
+  // The knob may slide freely along the neutral rail; off the rail it is
+  // constrained to the nearest vertical slot column — like a real H-gate.
+  const clampToGate = (px: number, pz: number): [number, number] => {
+    const x = THREE.MathUtils.clamp(px, -GX, GX);
+    const z = THREE.MathUtils.clamp(pz, -GZ, GZ);
+    if (Math.abs(z) < 0.14) return [x, z];
+    const col = [-GX, 0, GX].reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
+    return [col, z];
+  };
+
+  const startDrag = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    (e.target as Element)?.setPointerCapture?.(e.pointerId);
+    dragging.current = true;
+    route.current = [];
+    const [x, z] = clampToGate(e.point.x, e.point.z);
+    dragPt.current.set(x, z);
+    document.body.style.cursor = "grabbing";
+  };
+
+  const moveDrag = (e: ThreeEvent<PointerEvent>) => {
+    if (!dragging.current) return;
+    const [x, z] = clampToGate(e.point.x, e.point.z);
+    dragPt.current.set(x, z);
+  };
+
+  const endDrag = () => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    document.body.style.cursor = "";
+    // Snap into the nearest slot and report it up; the knob stays there
+    // until the scroll-driven gear actually changes again.
+    let best: Gear = prevGear.current;
+    let bestD = Infinity;
+    for (const g of Object.keys(SLOT) as Gear[]) {
+      const [sx, sz] = SLOT[g];
+      const dd = (sx - dragPt.current.x) ** 2 + (sz - dragPt.current.y) ** 2;
+      if (dd < bestD) {
+        bestD = dd;
+        best = g;
+      }
+    }
+    route.current = [new THREE.Vector2(...SLOT[best])];
+    prevGear.current = best;
+    onShift(best);
   };
 
   /* ------------------------------ scene ------------------------------ */
@@ -386,26 +445,25 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
         );
       })}
 
-      {/* click targets */}
-      {GEARS.map(({ gear }) => {
-        const [x, z] = SLOT[gear];
-        return (
-          <mesh
-            key={`hit-${gear}`}
-            position={[x, 0.16, z]}
-            rotation={[-Math.PI / 2, 0, 0]}
-            visible={false}
-            onClick={(e) => {
-              e.stopPropagation();
-              onShift(gear);
-            }}
-            onPointerOver={() => setCursor(true)}
-            onPointerOut={() => setCursor(false)}
-          >
-            <planeGeometry args={[0.62, 0.62]} />
-          </mesh>
-        );
-      })}
+      {/* drag surface — grab the knob and slide it through the gate;
+          a plain click degenerates into a zero-length drag and still shifts */}
+      <mesh
+        position={[0, 0.26, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false}
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerLeave={endDrag}
+        onPointerOver={() => {
+          if (!dragging.current) document.body.style.cursor = "grab";
+        }}
+        onPointerOut={() => {
+          if (!dragging.current) document.body.style.cursor = "";
+        }}
+      >
+        <planeGeometry args={[4.6, 3.6]} />
+      </mesh>
 
       {/* the stick itself — pivots below the plate.
           GLB из Higgsfield (tripo_3d), пока грузится — процедурный фолбэк */}
@@ -476,6 +534,7 @@ export function Shifter3D({ active, onShift, className }: Shifter3DProps) {
     <div ref={wrap} className={className} style={{ aspectRatio: "15 / 16" }}>
       <Canvas
         frameloop={inView ? "always" : "never"}
+        style={{ touchAction: "none" }}
         dpr={[1, 1.75]}
         camera={{ position: [0, 2.7, 5.4], fov: 30 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
