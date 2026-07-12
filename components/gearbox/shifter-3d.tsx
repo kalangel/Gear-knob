@@ -121,7 +121,7 @@ function GateLabel({
   }, [char, active]);
   useEffect(() => () => tex.dispose(), [tex]);
   return (
-    <mesh position={[x, 0.101, z]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh position={[x, 0.287, z]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[0.44, 0.44]} />
       <meshBasicMaterial map={tex} transparent depthWrite={false} />
     </mesh>
@@ -338,7 +338,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
       curveSegments: 10,
     });
     g.rotateX(-Math.PI / 2);
-    g.translate(0, 0.115, 0);
+    g.translate(0, 0.281, 0); // сидит на верхней грани платы (y≈0.28)
     return g;
   }, []);
 
@@ -423,11 +423,11 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
 
       {/* H-gate slots (flat, slightly above the plate) */}
       {[-GX, 0, GX].map((x) => (
-        <mesh key={x} position={[x, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} material={slotMat}>
+        <mesh key={x} position={[x, 0.285, 0]} rotation={[-Math.PI / 2, 0, 0]} material={slotMat}>
           <planeGeometry args={[0.17, 2 * GZ + 0.17]} />
         </mesh>
       ))}
-      <mesh position={[0, 0.099, 0]} rotation={[-Math.PI / 2, 0, 0]} material={slotMat}>
+      <mesh position={[0, 0.284, 0]} rotation={[-Math.PI / 2, 0, 0]} material={slotMat}>
         <planeGeometry args={[2 * GX + 0.17, 0.17]} />
       </mesh>
 
@@ -448,7 +448,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
       {/* drag surface — grab the knob and slide it through the gate;
           a plain click degenerates into a zero-length drag and still shifts */}
       <mesh
-        position={[0, 0.26, 0]}
+        position={[0, 0.32, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         visible={false}
         onPointerDown={startDrag}
