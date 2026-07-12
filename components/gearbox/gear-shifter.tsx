@@ -35,9 +35,8 @@ export function GearShifter({ active, onShift, className, labelled = true }: Gea
 
   useEffect(() => {
     if (prev.current === active) return;
-    const from = SLOT[prev.current];
-    const to = SLOT[active];
     prev.current = active;
+    const to = SLOT[active];
 
     if (reduced) {
       x.set(to.x);
@@ -45,15 +44,45 @@ export function GearShifter({ active, onShift, className, labelled = true }: Gea
       return;
     }
 
-    setShifting(true);
-    const sameColumn = from.x === to.x;
-    const xs = sameColumn ? [from.x, to.x] : [from.x, from.x, to.x, to.x];
-    const ys = sameColumn ? [from.y, to.y] : [from.y, NEUTRAL_Y, NEUTRAL_Y, to.y];
-    const times = sameColumn ? [0, 1] : [0, 0.36, 0.68, 1];
-    const duration = sameColumn ? 0.38 : 0.62;
+    // Start from the knob's ACTUAL position (mid-flight interruptions stay smooth,
+    // no teleporting back to the previous slot).
+    const cx = x.get();
+    const cy = y.get();
 
-    const ax = animate(x, xs, { duration, times, ease: [0.65, 0, 0.35, 1] });
-    const ay = animate(y, ys, {
+    // Route through the H-gate: rise to the neutral row, slide across, drop into the slot.
+    const pts: { x: number; y: number }[] =
+      Math.abs(cx - to.x) < 0.5
+        ? [
+            { x: cx, y: cy },
+            { x: to.x, y: to.y },
+          ]
+        : [
+            { x: cx, y: cy },
+            { x: cx, y: NEUTRAL_Y },
+            { x: to.x, y: NEUTRAL_Y },
+            { x: to.x, y: to.y },
+          ];
+
+    // Already (almost) there — just snap the last fraction of a pixel.
+    let total = 0;
+    const acc: number[] = [0];
+    for (let i = 1; i < pts.length; i++) {
+      total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      acc.push(total);
+    }
+    if (total < 1) {
+      x.set(to.x);
+      y.set(to.y);
+      return;
+    }
+
+    setShifting(true);
+    // Keyframe timing proportional to segment length = constant lever speed.
+    const times = acc.map((d) => d / total);
+    const duration = Math.min(0.7, Math.max(0.28, total / 520));
+
+    const ax = animate(x, pts.map((p) => p.x), { duration, times, ease: [0.65, 0, 0.35, 1] });
+    const ay = animate(y, pts.map((p) => p.y), {
       duration,
       times,
       ease: [0.65, 0, 0.35, 1],
