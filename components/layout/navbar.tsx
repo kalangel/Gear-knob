@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { GEARS, SITE } from "@/lib/data";
 import { useActiveGear, scrollToGear } from "@/hooks/use-active-gear";
 import { useLang } from "@/components/language-context";
+import { usePerf } from "@/components/perf-context";
 import type { Lang } from "@/lib/i18n";
 import { EASE } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ const LANGS: Lang[] = ["de", "ru"];
 export function Navbar() {
   const active = useActiveGear();
   const { lang, setLang, t } = useLang();
+  const { eco, setMode } = usePerf();
 
   return (
     <motion.header
@@ -82,6 +84,29 @@ export function Navbar() {
             </button>
           ))}
         </div>
+
+        <div className="h-5 w-px bg-white/10" />
+
+        {/* ECO — облегчённый режим для слабых ПК */}
+        <button
+          onClick={() => setMode(eco ? "off" : "on")}
+          aria-pressed={eco}
+          title={eco ? "ECO an — Effekte reduziert" : "ECO aus — volle Effekte"}
+          className={cn(
+            "relative ml-0.5 mr-1 flex h-9 items-center gap-1.5 rounded-full px-2.5 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors duration-300",
+            eco
+              ? "bg-[#22331f] text-[#8fd97a] shadow-[inset_0_0_0_1px_rgba(143,217,122,0.35)]"
+              : "text-muted hover:text-silver"
+          )}
+        >
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full transition-colors duration-300",
+              eco ? "bg-[#8fd97a] shadow-[0_0_8px_rgba(143,217,122,0.8)]" : "bg-white/20"
+            )}
+          />
+          Eco
+        </button>
       </nav>
     </motion.header>
   );

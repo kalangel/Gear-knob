@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { GearShifter } from "@/components/gearbox/gear-shifter";
+import { HeroShifter } from "@/components/gearbox/hero-shifter";
 import { Button } from "@/components/ui/button";
 import { Magnetic } from "@/components/ui/magnetic";
 import { useActiveGear, scrollToGear } from "@/hooks/use-active-gear";
@@ -101,7 +101,7 @@ export function Hero() {
           aria-hidden
           className="absolute inset-x-8 -bottom-6 h-16 rounded-[50%] bg-black/70 blur-2xl"
         />
-        <GearShifter active={gear} onShift={scrollToGear} className="drop-shadow-[0_30px_60px_rgba(0,0,0,0.7)]" />
+        <HeroShifter active={gear} onShift={scrollToGear} className="drop-shadow-[0_30px_60px_rgba(0,0,0,0.7)]" />
         <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-widest2 text-muted">
           {t.hero.hint}
         </p>

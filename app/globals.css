@@ -171,3 +171,53 @@ body {
     animation: none !important;
   }
 }
+
+/* ---------- ECO mode (слабые ПК): срезаем самое дорогое ---------- */
+
+/* Композитинг: backdrop-blur — главный убийца слабых GPU */
+.eco .glass {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(13, 14, 17, 0.94);
+}
+
+/* Большие размытые «орбы» и полноэкранные фильтры */
+.eco .orb {
+  animation: none !important;
+  filter: none !important;
+  opacity: 0.35;
+}
+.eco :is(.blur-xl, .blur-2xl, .blur-3xl) {
+  filter: none !important;
+  opacity: 0.4;
+}
+
+/* Бесконечные анимации и переливы */
+.eco .sheen::after {
+  display: none;
+}
+.eco :is(.animate-marquee, .animate-spin-slow, .animate-floaty, .animate-pulse-led, .animate-pulse) {
+  animation: none !important;
+}
+
+/* Свечения текста — дешевле без тени */
+.eco .text-accent-glow {
+  text-shadow: none;
+}
+
+/* Дорогие тени и drop-shadow */
+.eco [class*="drop-shadow"] {
+  filter: none !important;
+}
+
+/* Скипаем рендер оффскрин-секций целиком */
+.eco main > section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+/* Зерно/оверлеи с blend-режимами не рендерим (компоненты сами отключаются,
+   это страховка на случай кэшированного HTML) */
+.eco .mix-blend-overlay {
+  display: none;
+}
