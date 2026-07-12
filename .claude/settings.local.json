@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($j = Get-Content \"C:\\\\Users\\\\kohai\\\\.claude\\\\projects\\\\D--claude-Gear-knob\\\\a7d7827e-5ab2-471d-bffe-1f5c9b112b81\\\\tool-results\\\\toolu_01LWKWK2QTV46EcG3vbLGath.json\" -Raw | ConvertFrom-Json; $t = $j[0].text; $i = $t.IndexOf\\('+'\\); $t.Substring\\([Math]::Max\\(0,$i-200\\), [Math]::Min\\(1400, $t.Length - [Math]::Max\\(0,$i-200\\)\\)\\))",
+      "Bash(npx tsc *)",
+      "Bash(curl -s -m 5 http://127.0.0.1:8787/cdn-cgi/explorer/api -o - -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -m 5 \"http://127.0.0.1:8787/cdn-cgi/explorer/api/storage/kv/namespaces\")",
+      "Bash(curl -s -m 5 \"http://127.0.0.1:8787/cdn-cgi/explorer/api/d1/database\")",
+      "Bash(curl -s -m 5 \"http://127.0.0.1:8787/cdn-cgi/explorer/api/r2/buckets\")",
+      "Bash(npm run *)",
+      "Skill(update-config)",
+      "Bash(taskkill //PID 564 //F)",
+      "Bash(curl *)"
+    ]
+  }
+}
