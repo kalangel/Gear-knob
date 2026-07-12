@@ -147,7 +147,16 @@ export function Contact() {
                 />
               </div>
 
-              <div className="mt-2 flex items-center gap-5">
+              <div className="mt-2 flex flex-wrap-reverse items-center justify-between gap-5">
+                <p
+                  aria-live="polite"
+                  className={cn(
+                    "max-w-[220px] font-mono text-[10px] uppercase leading-relaxed tracking-widest",
+                    status === "error" ? "text-accent-red" : "text-muted"
+                  )}
+                >
+                  {status === "error" ? t.contact.error : t.contact.hint}
+                </p>
                 <Magnetic strength={0.3}>
                   <motion.button
                     type="submit"
@@ -168,22 +177,15 @@ export function Contact() {
                       )}
                     />
                     <Power className="h-5 w-5" />
-                    {status === "sending"
-                      ? t.contact.ignition
-                      : status === "sent"
-                        ? t.contact.sent
-                        : t.contact.start}
+                    <span className="max-w-[4.5rem] px-1 text-center leading-snug tracking-[0.16em]">
+                      {status === "sending"
+                        ? t.contact.ignition
+                        : status === "sent"
+                          ? t.contact.sent
+                          : t.contact.start}
+                    </span>
                   </motion.button>
                 </Magnetic>
-                <p
-                  aria-live="polite"
-                  className={cn(
-                    "max-w-[220px] font-mono text-[10px] uppercase leading-relaxed tracking-widest",
-                    status === "error" ? "text-accent-red" : "text-muted"
-                  )}
-                >
-                  {status === "error" ? t.contact.error : t.contact.hint}
-                </p>
               </div>
             </form>
           </div>
