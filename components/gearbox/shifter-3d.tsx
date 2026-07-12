@@ -413,7 +413,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   return (
     <group ref={rig} position={[0, -0.35, 0]}>
       {/* pedestal */}
-      <mesh position={[0, -0.28, 0]} material={rubber}>
+      <mesh position={[0, -0.16, 0]} material={rubber}>
         <boxGeometry args={[2.7, 0.62, 2.2]} />
       </mesh>
 
@@ -536,7 +536,7 @@ export function Shifter3D({ active, onShift, className }: Shifter3DProps) {
         frameloop={inView ? "always" : "never"}
         style={{ touchAction: "none" }}
         dpr={[1, 1.75]}
-        camera={{ position: [0, 2.7, 5.4], fov: 30 }}
+        camera={{ position: [0, 3.1, 6.6], fov: 30 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         onCreated={({ camera }) => camera.lookAt(0, 0.3, 0)}
       >
