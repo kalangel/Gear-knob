@@ -5,8 +5,9 @@
 :root {
   --bg: #08090a;
   --surface: #0e0f12;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --grid-line: rgba(255, 255, 255, 0.02);
   --accent: #4da2ff;
   --accent-red: #ff3441;
   --glow: rgba(77, 162, 255, 0.35);
@@ -19,7 +20,7 @@ html {
 
 body {
   background: var(--bg);
-  color: #e8eaee;
+  color: #f2f4f8;
   font-feature-settings: "ss01", "cv11";
   overflow-x: hidden;
 }
@@ -135,11 +136,11 @@ body {
 }
 
 .grid-lines {
-  background-image: linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 75%);
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 96px 96px;
+  mask-image: radial-gradient(ellipse 70% 50% at 50% 38%, black 20%, transparent 68%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 38%, black 20%, transparent 68%);
 }
 
 @keyframes gradient-drift {
@@ -147,16 +148,13 @@ body {
   100% {
     transform: translate(0, 0) scale(1);
   }
-  33% {
-    transform: translate(6%, -4%) scale(1.08);
-  }
-  66% {
-    transform: translate(-5%, 5%) scale(0.96);
+  50% {
+    transform: translate(2%, -1.5%) scale(1.03);
   }
 }
 
 .orb {
-  animation: gradient-drift 16s ease-in-out infinite;
+  animation: gradient-drift 30s ease-in-out infinite;
   will-change: transform;
 }
 

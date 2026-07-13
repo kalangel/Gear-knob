@@ -1,3 +1,4 @@
+import { GearSystem } from "@/components/background/gear-system";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/sections/hero";
@@ -11,6 +12,7 @@ import { Playground } from "@/components/sections/playground";
 export default function Home() {
   return (
     <>
+      <GearSystem />
       <Navbar />
       <main>
         <Hero />
