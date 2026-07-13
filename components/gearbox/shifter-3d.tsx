@@ -183,6 +183,11 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   // Manual drag: while the hand is on the knob, the pointer wins over scroll
   const dragging = useRef(false);
   const dragPt = useRef(new THREE.Vector2(...SLOT[active]));
+  // Grab anywhere on the lever (incl. the knob top): delta-based drag
+  const stickGrab = useRef(false);
+  const grabY = useRef(0);
+  const grabStart = useRef(new THREE.Vector2());
+  const grabBase = useRef(new THREE.Vector2());
 
   // Re-route through the neutral rail whenever the gear changes
   useEffect(() => {
@@ -371,18 +376,50 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     return [col, z];
   };
 
+  // Пересечение луча указателя с горизонтальной плоскостью y=h (world):
+  // на захваченных pointer-событиях e.point может протухать, а e.ray всегда свежий
+  const rayAtY = (e: ThreeEvent<PointerEvent>, h: number): [number, number] => {
+    const t = (h - e.ray.origin.y) / (e.ray.direction.y || -1e-6);
+    return [e.ray.origin.x + e.ray.direction.x * t, e.ray.origin.z + e.ray.direction.z * t];
+  };
+
   const startDrag = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     (e.target as Element)?.setPointerCapture?.(e.pointerId);
     dragging.current = true;
+    stickGrab.current = false;
     route.current = [];
     const [x, z] = clampToGate(e.point.x, e.point.z);
     dragPt.current.set(x, z);
     document.body.style.cursor = "grabbing";
   };
 
+  // Grab the lever itself (any height, including the knob): the knob follows
+  // pointer *deltas*, so it doesn't jump to the projected hit point
+  const startDragStick = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    (e.target as Element)?.setPointerCapture?.(e.pointerId);
+    dragging.current = true;
+    stickGrab.current = true;
+    route.current = [];
+    grabY.current = e.point.y;
+    grabStart.current.set(...rayAtY(e, grabY.current));
+    grabBase.current.copy(pos.current);
+    dragPt.current.copy(pos.current);
+    document.body.style.cursor = "grabbing";
+  };
+
   const moveDrag = (e: ThreeEvent<PointerEvent>) => {
     if (!dragging.current) return;
+    if (stickGrab.current) {
+      const [px, pz] = rayAtY(e, grabY.current);
+      const [x, z] = clampToGate(
+        grabBase.current.x + (px - grabStart.current.x),
+        grabBase.current.y + (pz - grabStart.current.y)
+      );
+      dragPt.current.set(x, z);
+      return;
+    }
     const [x, z] = clampToGate(e.point.x, e.point.z);
     dragPt.current.set(x, z);
   };
@@ -390,6 +427,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   const endDrag = () => {
     if (!dragging.current) return;
     dragging.current = false;
+    stickGrab.current = false;
     document.body.style.cursor = "";
     // Snap into the nearest slot and report it up; the knob stays there
     // until the scroll-driven gear actually changes again.
@@ -500,6 +538,25 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
         >
           <StickModel />
         </Suspense>
+
+        {/* invisible grab collider — covers the whole lever incl. the knob top,
+            tilts together with the stick */}
+        <mesh
+          position={[0, 1.25, 0]}
+          visible={false}
+          onPointerDown={startDragStick}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerLeave={endDrag}
+          onPointerOver={() => {
+            if (!dragging.current) document.body.style.cursor = "grab";
+          }}
+          onPointerOut={() => {
+            if (!dragging.current) document.body.style.cursor = "";
+          }}
+        >
+          <cylinderGeometry args={[0.42, 0.28, 2.5, 12]} />
+        </mesh>
       </group>
     </group>
   );
