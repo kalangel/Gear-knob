@@ -26,10 +26,10 @@ export function Hero() {
       <div className="absolute inset-0 grid-lines" aria-hidden />
       <div
         aria-hidden
-        className="orb absolute -top-40 left-1/2 h-[720px] w-[920px] -translate-x-1/2 rounded-full opacity-60"
+        className="orb absolute -top-40 left-1/2 h-[720px] w-[920px] -translate-x-1/2 rounded-full opacity-45"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(77,162,255,0.10) 0%, rgba(40,44,52,0.18) 40%, transparent 70%)",
+            "radial-gradient(ellipse at center, rgba(77,162,255,0.07) 0%, rgba(40,44,52,0.14) 40%, transparent 70%)",
           filter: "blur(40px)",
         }}
       />
