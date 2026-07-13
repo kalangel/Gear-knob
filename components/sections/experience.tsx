@@ -45,7 +45,7 @@ const T_START = -120;
 const T_SWEEP = 240;
 const MAX_V = 5000; // px/s of scroll = redline
 const IDLE_RPM = 800;
-const RPM_PER_V = 1.3;
+const RPM_PER_V = 2.6; // чувствительность к скроллу ×2
 const DIAL_MAX_RPM = 8000; // the "8" digit on the dial × 1000
 
 const dialDeg = (rpm: number) => Math.round((T_START + (T_SWEEP * rpm) / DIAL_MAX_RPM) * 10) / 10;
