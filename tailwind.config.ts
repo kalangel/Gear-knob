@@ -14,9 +14,9 @@ const config: Config = {
         graphite: "#15171b",
         steel: "#1d2026",
         gunmetal: "#282c34",
-        chrome: "#c9cdd4",
-        silver: "#8b909a",
-        muted: "#5d626c",
+        chrome: "#d3d7de",
+        silver: "#a9afba",
+        muted: "#7e8592",
         accent: {
           DEFAULT: "#4da2ff",
           dim: "rgba(77,162,255,0.14)",

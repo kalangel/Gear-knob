@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Exo_2, Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
+const display = Exo_2({
+  subsets: ["latin", "cyrillic"],
   variable: "--font-display",
   display: "swap",
 });
 
 const sans = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   variable: "--font-sans",
   display: "swap",
 });
 
 const mono = JetBrains_Mono({
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   variable: "--font-mono",
   display: "swap",
 });
