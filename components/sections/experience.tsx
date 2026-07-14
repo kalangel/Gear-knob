@@ -263,7 +263,7 @@ export function Experience() {
   const [punchLead, punchTail] = t.experience.punchline.split(" — ");
 
   return (
-    <section id="experience" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 py-20 md:py-28">
+    <section id="experience" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 pt-20 pb-12 md:pt-28 md:pb-16">
       <SectionHeading gear="4" eyebrow={t.experience.eyebrow} title={t.experience.title} />
 
       <Reveal>

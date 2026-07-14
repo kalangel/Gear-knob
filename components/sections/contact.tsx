@@ -82,7 +82,7 @@ export function Contact() {
   const ignited = status === "sending" || status === "sent";
 
   return (
-    <section id="contact" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 py-20 md:py-28">
+    <section id="contact" className="relative mx-auto max-w-6xl scroll-mt-24 px-6 pt-12 pb-20 md:pt-16 md:pb-28">
       <SectionHeading gear="5" eyebrow={t.contact.eyebrow} title={t.contact.title} />
 
       <Reveal>
@@ -147,7 +147,7 @@ export function Contact() {
                 />
               </div>
 
-              <div className="mt-2 flex flex-wrap-reverse items-center justify-between gap-5">
+              <div className="mt-6 flex flex-wrap-reverse items-center justify-between gap-5">
                 <p
                   aria-live="polite"
                   className={cn(
