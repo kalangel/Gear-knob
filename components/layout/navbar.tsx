@@ -87,7 +87,7 @@ export function Navbar() {
 
         <div className="h-5 w-px bg-white/10" />
 
-        {/* ECO — облегчённый режим для слабых ПК */}
+        {/* ECO — lightweight mode for weak hardware */}
         <button
           onClick={() => setMode(eco ? "off" : "on")}
           aria-pressed={eco}

@@ -31,7 +31,7 @@ interface GearDef {
   /**
    * Extra phase (rad) on top of the computed mesh alignment.
    * The analytic phase is a first approximation — tune this by eye
-   * при проверке точки контакта.
+   * while checking the contact point.
    */
   phaseTweak?: number;
   hubRadius: number;
@@ -43,15 +43,15 @@ interface GearDef {
 }
 
 const DEFS: GearDef[] = [
-  // Огромная — уходит за нижний правый край экрана
+  // Huge — runs off the bottom-right edge of the screen
   { id: "g1", teeth: 68, meshesWith: null, x: 1460, y: 1080, hubRadius: 74, spokes: 6, mobile: true },
-  // Средняя, акцентная — вверх-влево от g1
+  // Medium, accented — up-left from g1
   { id: "g2", teeth: 26, meshesWith: "g1", placeAt: deg(-105), hubRadius: 36, spokes: 5, accent: true, mobile: true },
-  // Маленькая — к верхнему правому углу
+  // Small — toward the top-right corner
   { id: "g3", teeth: 13, meshesWith: "g2", placeAt: deg(-55), hubRadius: 20, spokes: 0 },
-  // Средне-крупная — за правым краем, видна полоска зубьев
+  // Medium-large — behind the right edge, only a strip of teeth visible
   { id: "g4", teeth: 34, meshesWith: "g1", placeAt: deg(-64), hubRadius: 44, spokes: 6 },
-  // Маленькая акцентная — вниз-влево от g2
+  // Small accented — down-left from g2
   { id: "g5", teeth: 13, meshesWith: "g2", placeAt: deg(163), hubRadius: 20, spokes: 0, accent: true },
 ];
 

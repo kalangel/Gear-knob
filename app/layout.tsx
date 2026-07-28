@@ -22,7 +22,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  // TODO: nach dem Deploy durch die echte Vercel-URL (oder eigene Domain) ersetzen
+  // TODO: replace with the real Vercel URL (or a custom domain) after deploying
   metadataBase: new URL("https://kyrylo-polinkevych.vercel.app"),
   title: "Kyrylo Polinkevych — Frontend-Entwickler & UI/UX-Designer",
   description:

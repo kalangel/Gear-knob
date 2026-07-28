@@ -12,12 +12,12 @@ import {
 export type PerfMode = "auto" | "on" | "off";
 
 interface PerfState {
-  /** true → сайт работает в облегчённом режиме (слабый ПК / ручной ECO). */
+  /** true → site runs in the lightweight mode (weak hardware / manual ECO). */
   eco: boolean;
-  /** Что выбрал пользователь: auto (детект железа) / on / off. */
+  /** What the user picked: auto (hardware detection) / on / off. */
   mode: PerfMode;
   setMode: (m: PerfMode) => void;
-  /** Что решил авто-детект (для подсказки в UI). */
+  /** What the auto-detect decided (for the UI hint). */
   autoLowEnd: boolean;
 }
 
@@ -30,7 +30,7 @@ const PerfContext = createContext<PerfState>({
 
 const STORAGE_KEY = "kp:eco";
 
-/** Эвристика «слабого ПК»: мало ядер / памяти, save-data или reduced-motion. */
+/** Heuristic for "weak hardware": few cores/little memory, save-data, or reduced-motion. */
 function detectLowEnd(): boolean {
   if (typeof window === "undefined") return false;
   const nav = navigator as Navigator & {
@@ -45,7 +45,7 @@ function detectLowEnd(): boolean {
 }
 
 export function PerfProvider({ children }: { children: ReactNode }) {
-  // SSR-безопасно: до маунта считаем "off"-детект, режим читаем после маунта.
+  // SSR-safe: assume "off" detection before mount, read the real mode after.
   const [mode, setModeState] = useState<PerfMode>("auto");
   const [autoLowEnd, setAutoLowEnd] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -72,7 +72,7 @@ export function PerfProvider({ children }: { children: ReactNode }) {
 
   const eco = mounted && (mode === "on" || (mode === "auto" && autoLowEnd));
 
-  // Глобальный класс — CSS-оверрайды дешевле, чем прокидывать проп в каждый компонент.
+  // Global class — CSS overrides are cheaper than threading a prop through every component.
   useEffect(() => {
     document.documentElement.classList.toggle("eco", eco);
   }, [eco]);

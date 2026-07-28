@@ -6,7 +6,7 @@ import { GearShifter } from "./gear-shifter";
 import { usePerf } from "@/components/perf-context";
 import type { Gear } from "@/lib/data";
 
-/** 3D-версия грузится отдельным чанком и только на способном железе. */
+/** The 3D version loads as a separate chunk, only on capable hardware. */
 const Shifter3D = dynamic(
   () => import("./shifter-3d").then((m) => m.Shifter3D),
   { ssr: false, loading: () => <div style={{ aspectRatio: "15 / 16" }} /> }
@@ -28,9 +28,9 @@ export interface HeroShifterProps {
 }
 
 /**
- * Прогрессивное улучшение: сразу рендерим лёгкий SVG-шифтер,
- * на нормальном железе поверх подгружается полноценный 3D.
- * В ECO-режиме / без WebGL остаёмся на SVG.
+ * Progressive enhancement: render the lightweight SVG shifter immediately,
+ * then swap in the full 3D version on capable hardware.
+ * Stays on SVG in ECO mode / without WebGL.
  */
 export function HeroShifter({ active, onShift, className }: HeroShifterProps) {
   const { eco } = usePerf();

@@ -8,10 +8,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { GEARS, type Gear } from "@/lib/data";
 
-/* ------------------------------------------------------------------ */
-/*  Layout: H-gate on the XZ plane. x = column, z = row (‑1 top, +1 bottom) */
-/* ------------------------------------------------------------------ */
-
+// Layout: H-gate on the XZ plane. x = column, z = row (-1 top, +1 bottom)
 const GX = 0.72; // column offset
 const GZ = 0.62; // row offset
 
@@ -30,12 +27,8 @@ const LEAN_Z = 0.30; // max lean around X axis (fore/aft rows)
 
 const ACCENT = "#4da2ff";
 const ACCENT_RED = "#ff3441";
-const SILVER = "#8b919d";
 
-/* ------------------------------------------------------------------ */
-/*  Environment: RoomEnvironment → cheap studio reflections for chrome */
-/* ------------------------------------------------------------------ */
-
+// RoomEnvironment gives cheap studio reflections for the chrome parts
 function Env() {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
@@ -51,10 +44,6 @@ function Env() {
   }, [gl, scene]);
   return null;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Canvas-texture helpers (labels + knob engraving)                    */
-/* ------------------------------------------------------------------ */
 
 function makeLabelTexture(char: string, color: string, glow: boolean) {
   const c = document.createElement("canvas");
@@ -100,10 +89,6 @@ function makeKnobTexture() {
   return tex;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Gate label (flat on the plate near the slot end)                    */
-/* ------------------------------------------------------------------ */
-
 function GateLabel({
   char,
   x,
@@ -128,10 +113,7 @@ function GateLabel({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Higgsfield-generated shifter (tripo_3d → meshopt-compressed GLB)    */
-/* ------------------------------------------------------------------ */
-
+// Higgsfield-generated shifter (tripo_3d → meshopt-compressed GLB)
 function StickModel() {
   const gltf = useLoader(GLTFLoader, "/models/shifter.glb", (loader) => {
     (loader as GLTFLoader).setMeshoptDecoder(MeshoptDecoder);
@@ -139,10 +121,10 @@ function StickModel() {
 
   const scene = useMemo(() => {
     const s = gltf.scene;
-    // Auto-normalize: высота ~2.05, основание на уровне пластины.
-    // useLoader кэширует scene, а useMemo в dev вызывается дважды —
-    // поэтому сначала сбрасываем трансформы (иначе повторный прогон
-    // мерил бы уже отмасштабированный бокс и «топил» модель под плату).
+    // Auto-normalize to height ~2.05 with the base sitting on the plate.
+    // useLoader caches the scene and useMemo runs twice in dev, so the
+    // transform is reset first — otherwise the second pass would measure
+    // the already-scaled box and sink the model below the plate.
     s.scale.set(1, 1, 1);
     s.position.set(0, 0, 0);
     s.updateMatrixWorld(true);
@@ -157,7 +139,7 @@ function StickModel() {
       if (mesh.isMesh) {
         const m = mesh.material as THREE.MeshStandardMaterial;
         if (m && "envMapIntensity" in m) m.envMapIntensity = 1.1;
-        mesh.frustumCulled = false; // рычаг наклоняется — не даём культить у краёв
+        mesh.frustumCulled = false; // the lever tilts — don't let it get culled at the edges
       }
     });
     return s;
@@ -165,10 +147,6 @@ function StickModel() {
 
   return <primitive object={scene} />;
 }
-
-/* ------------------------------------------------------------------ */
-/*  The actual gearbox                                                  */
-/* ------------------------------------------------------------------ */
 
 function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void }) {
   const stick = useRef<THREE.Group>(null!);
@@ -239,8 +217,6 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     rig.current.rotation.y += (px * 0.22 - rig.current.rotation.y) * Math.min(1, 4 * d);
     rig.current.rotation.x += (-py * 0.08 - rig.current.rotation.x) * Math.min(1, 4 * d);
   });
-
-  /* ---------------- shared materials & geometries ---------------- */
 
   const chrome = useMemo(
     () =>
@@ -343,7 +319,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
       curveSegments: 10,
     });
     g.rotateX(-Math.PI / 2);
-    g.translate(0, 0.281, 0); // сидит на верхней грани платы (y≈0.28)
+    g.translate(0, 0.281, 0); // sits on the plate's top face (y≈0.28)
     return g;
   }, []);
 
@@ -364,8 +340,6 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   const knobTex = useMemo(() => makeKnobTexture(), []);
   useEffect(() => () => knobTex.dispose(), [knobTex]);
 
-  /* --------------------------- manual drag --------------------------- */
-
   // The knob may slide freely along the neutral rail; off the rail it is
   // constrained to the nearest vertical slot column — like a real H-gate.
   const clampToGate = (px: number, pz: number): [number, number] => {
@@ -376,8 +350,8 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     return [col, z];
   };
 
-  // Пересечение луча указателя с горизонтальной плоскостью y=h (world):
-  // на захваченных pointer-событиях e.point может протухать, а e.ray всегда свежий
+  // Intersect the pointer ray with the horizontal plane y=h (world space):
+  // on captured pointer events e.point can go stale, but e.ray is always fresh
   const rayAtY = (e: ThreeEvent<PointerEvent>, h: number): [number, number] => {
     const t = (h - e.ray.origin.y) / (e.ray.direction.y || -1e-6);
     return [e.ray.origin.x + e.ray.direction.x * t, e.ray.origin.z + e.ray.direction.z * t];
@@ -446,8 +420,6 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     onShift(best);
   };
 
-  /* ------------------------------ scene ------------------------------ */
-
   return (
     <group ref={rig} position={[0, -0.35, 0]}>
       {/* pedestal */}
@@ -504,7 +476,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
       </mesh>
 
       {/* the stick itself — pivots below the plate.
-          GLB из Higgsfield (tripo_3d), пока грузится — процедурный фолбэк */}
+          GLB from Higgsfield (tripo_3d); procedural fallback while it loads */}
       <group ref={stick} position={[0, -0.05, 0]}>
         <Suspense
           fallback={
@@ -561,10 +533,6 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     </group>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Public component                                                    */
-/* ------------------------------------------------------------------ */
 
 export interface Shifter3DProps {
   active: Gear;

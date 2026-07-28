@@ -10,10 +10,10 @@ import { PerfProvider, usePerf } from "@/components/perf-context";
 function Shell({ children }: { children: React.ReactNode }) {
   const { eco } = usePerf();
   return (
-    // В eco глушим JS-анимации трансформов целиком — самая большая экономия CPU.
+    // In eco mode, kill JS transform animations entirely — the biggest CPU win.
     <MotionConfig reducedMotion={eco ? "always" : "user"}>
       {children}
-      {/* Полноэкранные оверлеи (курсор-фара, зерно) — дорогие на слабых GPU */}
+      {/* Full-screen overlays (cursor glow, film grain) — expensive on weak GPUs */}
       {!eco && <CursorGlow />}
       <GearHud />
       {!eco && <Noise />}

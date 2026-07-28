@@ -16,8 +16,6 @@ import { Reveal } from "@/components/ui/reveal";
 import { useLang } from "@/components/language-context";
 import { EASE } from "@/lib/motion";
 
-/* ---------- dash indicators: flicker on like a real dash check ---------- */
-
 const LIGHTS = [Zap, BatteryCharging, Flame, Cpu];
 
 function DashLights() {
@@ -39,13 +37,11 @@ function DashLights() {
   );
 }
 
-/* ---------- the star: a tachometer driven by live scroll velocity ---------- */
-
 const T_START = -120;
 const T_SWEEP = 240;
 const MAX_V = 5000; // px/s of scroll = redline
 const IDLE_RPM = 800;
-const RPM_PER_V = 2.6; // чувствительность к скроллу ×2
+const RPM_PER_V = 2.6; // scroll sensitivity ×2
 const DIAL_MAX_RPM = 8000; // the "8" digit on the dial × 1000
 
 const dialDeg = (rpm: number) => Math.round((T_START + (T_SWEEP * rpm) / DIAL_MAX_RPM) * 10) / 10;
@@ -179,8 +175,6 @@ function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit
   );
 }
 
-/* ---------- project process, styled like trip stages on a car display ---------- */
-
 function ProcessList({ title, steps }: { title: string; steps: { step: string; title: string; text: string }[] }) {
   return (
     <div className="flex flex-col gap-3">
@@ -212,8 +206,6 @@ function ProcessList({ title, steps }: { title: string; steps: { step: string; t
   );
 }
 
-/* ---------- hard facts, styled like vehicle specs ---------- */
-
 function Specs({ title, items }: { title: string; items: { label: string; value: string }[] }) {
   return (
     <div className="flex flex-col gap-3">
@@ -242,8 +234,6 @@ function Specs({ title, items }: { title: string; items: { label: string; value:
   );
 }
 
-/* ---------- chassis screw: tiny machined bolt for the display corners ---------- */
-
 function Screw({ className }: { className?: string }) {
   return (
     <span
@@ -254,8 +244,6 @@ function Screw({ className }: { className?: string }) {
     </span>
   );
 }
-
-/* ---------- section ---------- */
 
 export function Experience() {
   const { t } = useLang();
