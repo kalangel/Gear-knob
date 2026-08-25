@@ -68,8 +68,10 @@ export function GearSystem() {
   const visible = small ? GEARS.filter((g) => g.mobile) : GEARS;
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <svg
+        aria-hidden="true"
+        focusable="false"
         className="h-full w-full"
         viewBox="0 0 1600 900"
         preserveAspectRatio={small ? "xMaxYMid slice" : "xMidYMid slice"}

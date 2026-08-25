@@ -1,33 +1,46 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { animate, useInView } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { useReducedMotion } from "framer-motion";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/ui/reveal";
 import { useLang } from "@/components/language-context";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
 import { STATS } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 function Stat({ value, suffix, label, delay }: { value: number; suffix: string; label: string; delay: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-15%" });
-  const [n, setN] = useState(0);
+  const [ref, inView] = useInViewOnce<HTMLDivElement>("-15% 0px");
+  const out = useRef<HTMLSpanElement>(null);
+  const reduced = useReducedMotion();
 
+  // The count-up writes textContent directly — a React render per frame, four
+  // times over, is a needless tax on a phone.
   useEffect(() => {
+    const el = out.current;
+    if (!el) return;
+    if (reduced) {
+      el.textContent = String(value);
+      return;
+    }
     if (!inView) return;
-    const c = animate(0, value, {
-      duration: 1.6,
-      delay,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (v) => setN(Math.round(v)),
-    });
-    return () => c.stop();
-  }, [inView, value, delay]);
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    let raf = 0;
+    let start = 0;
+    const step = (now: number) => {
+      if (!start) start = now;
+      const t = Math.min(1, (now - start - delay * 1000) / 1600);
+      if (t >= 0) el.textContent = String(Math.round(ease(t) * value));
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, value, delay, reduced]);
 
   return (
     <div ref={ref} className="group rounded-2xl p-6 glass transition-all duration-500 hover:-translate-y-1 hover:border-white/20 md:p-8">
       <div className="font-display text-5xl font-bold tabular-nums text-metal md:text-6xl">
-        {n}
+        <span ref={out}>0</span>
         <span className="text-accent">{suffix}</span>
       </div>
       <div className="mt-3 h-px w-8 bg-accent/50 transition-all duration-500 group-hover:w-full" />

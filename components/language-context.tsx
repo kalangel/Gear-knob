@@ -1,43 +1,30 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { DICT, type Dict, type Lang } from "@/lib/i18n";
 
 interface LangContextValue {
   lang: Lang;
-  setLang: (lang: Lang) => void;
   t: Dict;
 }
 
-const LangContext = createContext<LangContextValue>({
-  lang: "de",
-  setLang: () => {},
-  t: DICT.de,
-});
+const LangContext = createContext<LangContextValue>({ lang: "de", t: DICT.de });
 
-/** German by default, Russian on toggle. Choice persists in localStorage. */
+/**
+ * The language is the URL: "/" is German, "/ru" is Russian. That keeps the
+ * server-rendered HTML honest — which is what hreflang promises to crawlers,
+ * and what a shared link has to deliver.
+ */
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("de");
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("lang");
-    if (saved === "de" || saved === "ru") setLangState(saved);
-  }, []);
+  const pathname = usePathname();
+  const lang: Lang = pathname?.startsWith("/ru") ? "ru" : "de";
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  const setLang = (l: Lang) => {
-    setLangState(l);
-    window.localStorage.setItem("lang", l);
-  };
-
-  return (
-    <LangContext.Provider value={{ lang, setLang, t: DICT[lang] }}>
-      {children}
-    </LangContext.Provider>
-  );
+  return <LangContext.Provider value={{ lang, t: DICT[lang] }}>{children}</LangContext.Provider>;
 }
 
 export function useLang() {

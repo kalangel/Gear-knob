@@ -1,15 +1,16 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/reveal";
 import { Magnetic } from "@/components/ui/magnetic";
 import { useLang } from "@/components/language-context";
 import { scrollToGear } from "@/hooks/use-active-gear";
 import { PROJECTS } from "@/lib/data";
-import { EASE } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type Project = (typeof PROJECTS)[number];
@@ -26,12 +27,23 @@ function ProjectCard({
   index: number;
 }) {
   const ref = useRef<HTMLAnchorElement>(null);
+  const [card, seen] = useInViewOnce<HTMLElement>("-8% 0px");
+  const reduced = useReducedMotion();
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
-  const rx = useSpring(useTransform(py, [0, 1], [7, -7]), { stiffness: 160, damping: 18 });
-  const ry = useSpring(useTransform(px, [0, 1], [-7, 7]), { stiffness: 160, damping: 18 });
+  // Pointer-driven tilt is a motion value, not an animation — it has to be
+  // flattened by hand when the system asks for reduced motion.
+  const rx = useSpring(useTransform(py, [0, 1], reduced ? [0, 0] : [7, -7]), {
+    stiffness: 160,
+    damping: 18,
+  });
+  const ry = useSpring(useTransform(px, [0, 1], reduced ? [0, 0] : [-7, 7]), {
+    stiffness: 160,
+    damping: 18,
+  });
 
   const onMove = (e: React.MouseEvent) => {
+    if (reduced) return;
     const r = ref.current?.getBoundingClientRect();
     if (!r) return;
     px.set((e.clientX - r.left) / r.width);
@@ -44,13 +56,20 @@ function ProjectCard({
   };
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 48 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-8%" }}
-      transition={{ duration: 0.85, ease: EASE, delay: (index % 2) * 0.1 }}
-      className={cn("group", project.wide ? "md:col-span-3" : "md:col-span-2")}
-      style={{ perspective: 1200 }}
+    <article
+      ref={card}
+      className={cn(
+        "reveal group",
+        seen && "reveal-in",
+        project.wide ? "md:col-span-3" : "md:col-span-2"
+      )}
+      style={
+        {
+          perspective: 1200,
+          "--ry": "48px",
+          "--rd": `${(index % 2) * 0.1}s`,
+        } as React.CSSProperties
+      }
     >
       <motion.a
         ref={ref}
@@ -121,7 +140,7 @@ function ProjectCard({
           </div>
         </div>
       </motion.a>
-    </motion.article>
+    </article>
   );
 }
 
@@ -144,17 +163,14 @@ export function Projects() {
       </div>
 
       {/* offer strip */}
-      <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-10%" }}
-        transition={{ duration: 0.8, ease: EASE }}
+      <Reveal
+        y={32}
         className="mt-10 flex flex-col items-center justify-between gap-6 rounded-2xl border border-white/8 p-7 glass md:flex-row md:p-9"
       >
         <p className="max-w-2xl text-balance text-center text-sm leading-relaxed text-silver md:text-left md:text-base">
           {t.projects.offer.lead}{" "}
-          <span className="whitespace-nowrap font-display text-xl font-bold text-metal md:text-2xl">
-            {t.projects.offer.price}
+          <span className="font-display text-xl font-bold text-metal md:text-2xl">
+            {t.projects.offer.terms}
           </span>
         </p>
         <Magnetic>
@@ -162,7 +178,7 @@ export function Projects() {
             {t.projects.offer.cta}
           </Button>
         </Magnetic>
-      </motion.div>
+      </Reveal>
     </section>
   );
 }

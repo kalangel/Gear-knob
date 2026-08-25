@@ -9,7 +9,8 @@ import { Experience } from "@/components/sections/experience";
 import { Contact } from "@/components/sections/contact";
 import { Playground } from "@/components/sections/playground";
 
-export default function Home() {
+/** One page, two routes: "/" (de) and "/ru". Copy comes from the language context. */
+export function Home() {
   return (
     <>
       <GearSystem />

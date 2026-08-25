@@ -1,8 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Reveal } from "./reveal";
-import { EASE } from "@/lib/motion";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
 import { cn } from "@/lib/utils";
 
 interface SectionHeadingProps {
@@ -14,6 +13,10 @@ interface SectionHeadingProps {
 
 /** "Erster Gang / Eingelegt" eyebrow + oversized metal title. */
 export function SectionHeading({ gear, eyebrow, title, className }: SectionHeadingProps) {
+  // inView is observed on the wrapper: the title starts translated outside the
+  // overflow clip, so an observer on the title itself would never fire
+  const [ref, seen] = useInViewOnce<HTMLDivElement>("-10% 0px");
+
   return (
     <div className={cn("mb-10 md:mb-14", className)}>
       <Reveal>
@@ -29,32 +32,26 @@ export function SectionHeading({ gear, eyebrow, title, className }: SectionHeadi
             {gear}
           </span>
           <span>{eyebrow}</span>
-          <motion.span
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.1, ease: EASE, delay: 0.2 }}
-            className="h-px flex-1 origin-left bg-gradient-to-r from-white/20 to-transparent"
+          <span
+            aria-hidden
+            className={cn(
+              "h-px flex-1 origin-left bg-gradient-to-r from-white/20 to-transparent transition-transform duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              seen ? "scale-x-100" : "scale-x-0"
+            )}
           />
         </div>
       </Reveal>
-      {/* inView is observed on the wrapper: the title starts translated outside the
-          overflow clip, so an observer on the title itself would never fire */}
-      <motion.div
-        className="overflow-hidden"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-10%" }}
-      >
-        <motion.h2
-          key={title}
-          variants={{ hidden: { y: "105%" }, visible: { y: "0%" } }}
-          transition={{ duration: 0.9, ease: EASE }}
-          className="font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight text-metal sm:text-6xl md:text-7xl lg:text-8xl"
+
+      <div ref={ref} className="overflow-hidden">
+        <h2
+          className={cn(
+            "rise font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight text-metal sm:text-6xl md:text-7xl lg:text-8xl",
+            seen && "rise-in"
+          )}
         >
           {title}
-        </motion.h2>
-      </motion.div>
+        </h2>
+      </div>
     </div>
   );
 }

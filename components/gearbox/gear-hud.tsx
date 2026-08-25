@@ -32,9 +32,14 @@ export function GearHud() {
           exit={{ opacity: 0, x: 40 }}
           transition={{ duration: 0.5, ease: EASE }}
           className="fixed bottom-6 right-6 z-40 hidden w-[128px] flex-col items-center gap-2 rounded-2xl p-3 glass lg:flex"
-          aria-label="Current gear indicator"
         >
-          <GearShifter active={gear} onShift={scrollToGear} labelled={false} className="w-full" />
+          <GearShifter
+            active={gear}
+            onShift={scrollToGear}
+            labelled={false}
+            compact
+            className="w-full"
+          />
           <div className="flex w-full items-baseline justify-between font-mono text-[10px] uppercase tracking-widest text-silver">
             <span>{t.hud.gear}</span>
             <span className={gear === "R" ? "text-accent-red" : "text-accent"}>{gear}</span>

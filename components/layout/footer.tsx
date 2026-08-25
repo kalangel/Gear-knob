@@ -5,6 +5,7 @@ import { ArrowUp } from "lucide-react";
 import { SITE } from "@/lib/data";
 import { Magnetic } from "@/components/ui/magnetic";
 import { useLang } from "@/components/language-context";
+import { scrollToGear } from "@/hooks/use-active-gear";
 
 export function Footer() {
   const { t } = useLang();
@@ -15,18 +16,24 @@ export function Footer() {
         <div className="font-mono text-[11px] uppercase tracking-widest text-muted">
           © 2026 {SITE.name}
         </div>
-        <div className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-widest text-muted">
-          <Link href="/impressum" className="transition-colors hover:text-accent">
+        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-muted">
+          <Link
+            href="/impressum"
+            className="flex min-h-11 items-center px-3 transition-colors hover:text-accent"
+          >
             Impressum
           </Link>
-          <Link href="/datenschutz" className="transition-colors hover:text-accent">
+          <Link
+            href="/datenschutz"
+            className="flex min-h-11 items-center px-3 transition-colors hover:text-accent"
+          >
             Datenschutz
           </Link>
         </div>
         <Magnetic>
           <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="group flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-silver transition-colors hover:text-accent"
+            onClick={() => scrollToGear(null)}
+            className="group flex min-h-11 items-center gap-2 px-1 font-mono text-[11px] uppercase tracking-widest text-silver transition-colors hover:text-accent"
           >
             {t.footer.toTop}
             <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 transition-colors group-hover:border-accent/50">

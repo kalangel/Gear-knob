@@ -14,24 +14,26 @@ import { BatteryCharging, Cpu, Flame, Zap } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/ui/reveal";
 import { useLang } from "@/components/language-context";
-import { EASE } from "@/lib/motion";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
+import { cn } from "@/lib/utils";
 
 const LIGHTS = [Zap, BatteryCharging, Flame, Cpu];
 
 function DashLights() {
+  const [ref, seen] = useInViewOnce<HTMLDivElement>("-20% 0px");
   return (
-    <div className="flex gap-2" aria-hidden>
+    <div ref={ref} className="flex gap-2" aria-hidden>
       {LIGHTS.map((Icon, i) => (
-        <motion.span
+        <span
           key={i}
-          initial={{ opacity: 0.15 }}
-          whileInView={{ opacity: [0.15, 1, 0.25, 1, 0.5, 1] }}
-          viewport={{ once: true, margin: "-20%" }}
-          transition={{ duration: 1.1, delay: 0.3 + i * 0.22, ease: "easeOut" }}
-          className="flex h-7 w-7 items-center justify-center rounded-md border border-accent/25 text-accent"
+          className={cn(
+            "reveal flex h-7 w-7 items-center justify-center rounded-md border border-accent/25 text-accent",
+            seen && "reveal-in"
+          )}
+          style={{ "--ry": "0px", "--rs": "0.85", "--rd": `${0.3 + i * 0.22}s` } as React.CSSProperties}
         >
           <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
-        </motion.span>
+        </span>
       ))}
     </div>
   );
@@ -57,7 +59,17 @@ function tarc(r: number, from: number, to: number) {
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${e.x} ${e.y}`;
 }
 
-function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit: string }) {
+function VelocityTach({
+  label,
+  hint,
+  unit,
+  ariaLabel,
+}: {
+  label: string;
+  hint: string;
+  unit: string;
+  ariaLabel: string;
+}) {
   const reduced = useReducedMotion();
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
@@ -67,20 +79,22 @@ function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit
   const rpm = useTransform(rpmValue, (r) => String(Math.round(r)).padStart(4, "0"));
   const redGlow = useTransform(smooth, [MAX_V * 0.6, MAX_V], [0, 0.6]);
 
-  // Needle rotates via the SVG transform attribute: framer's CSS rotate resolves
-  // originX/originY against the group's own bbox, not the viewBox, so the pivot drifts.
+  // The needle turns with a CSS transform on a stable origin (transform-box:
+  // view-box pins it to the viewBox, so the pivot cannot drift). One style
+  // write per frame, no SVG geometry is recomputed and nothing re-renders.
   const needleRef = useRef<SVGGElement>(null);
   useMotionValueEvent(rpmValue, "change", (r) => {
     if (reduced) return;
-    needleRef.current?.setAttribute("transform", `rotate(${dialDeg(r)} 120 112)`);
+    const el = needleRef.current;
+    if (el) el.style.transform = `rotate(${dialDeg(r)}deg)`;
   });
 
   const ticks = Array.from({ length: 9 }, (_, i) => T_START + (T_SWEEP * i) / 8);
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-full max-w-[340px]">
-        <svg viewBox="0 0 240 210" className="w-full" aria-hidden>
+      <div className="relative w-full max-w-[340px]" role="img" aria-label={ariaLabel}>
+        <svg viewBox="0 0 240 210" className="w-full" aria-hidden="true">
           <defs>
             <linearGradient id="vt-arc" x1="0" y1="1" x2="1" y2="0">
               <stop offset="0" stopColor="#2f333b" />
@@ -124,7 +138,7 @@ function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit
                   textAnchor="middle"
                   fontSize="11"
                   fontFamily="var(--font-mono)"
-                  fill={i >= 7 ? "rgba(255,52,65,0.85)" : "#5d626c"}
+                  fill={i >= 7 ? "rgba(255,52,65,0.9)" : "var(--dial-mark)"}
                 >
                   {i}
                 </text>
@@ -144,7 +158,16 @@ function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit
           />
 
           {/* needle */}
-          <g ref={needleRef} transform={`rotate(${dialDeg(reduced ? 2400 : IDLE_RPM)} 120 112)`}>
+          <g
+            ref={needleRef}
+            className="tach-needle"
+            style={{
+              transformBox: "view-box",
+              transformOrigin: "120px 112px",
+              transform: `rotate(${dialDeg(IDLE_RPM)}deg)`,
+              willChange: "transform",
+            }}
+          >
             <line x1="120" y1="112" x2="120" y2="42" stroke="#e8eaee" strokeWidth="3" strokeLinecap="round" />
             <line x1="120" y1="112" x2="120" y2="42" stroke="var(--accent)" strokeWidth="1.2" opacity="0.8" />
             <line x1="120" y1="112" x2="120" y2="128" stroke="#e8eaee" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
@@ -153,16 +176,21 @@ function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit
           <circle cx="120" cy="112" r="3" fill="var(--accent)" />
 
           {/* ×1000 */}
-          <text x="120" y="150" textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fill="#5d626c" letterSpacing="2">
+          <text x="120" y="150" textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fill="var(--etch)" letterSpacing="2">
             ×1000
           </text>
         </svg>
 
-        {/* live RPM readout */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center">
-          <motion.span className="font-mono text-3xl font-bold tabular-nums text-metal md:text-4xl">
-            {reduced ? "2400" : rpm}
-          </motion.span>
+        {/* live RPM readout — the parked twin is swapped in by CSS, so a
+            reduced-motion visitor never sees the digits move, not even once */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-1 flex flex-col items-center"
+        >
+          <span className="font-mono text-3xl font-bold tabular-nums text-metal md:text-4xl">
+            <motion.span className="rm-swap">{rpm}</motion.span>
+            <span className="rm-only">0000</span>
+          </span>
           <span className="font-mono text-[10px] uppercase tracking-widest2 text-muted">{unit}</span>
         </div>
       </div>
@@ -176,17 +204,18 @@ function VelocityTach({ label, hint, unit }: { label: string; hint: string; unit
 }
 
 function ProcessList({ title, steps }: { title: string; steps: { step: string; title: string; text: string }[] }) {
+  const [ref, seen] = useInViewOnce<HTMLDivElement>("-15% 0px");
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={ref} className="flex flex-col gap-3">
       <div className="mb-1 font-mono text-[10px] uppercase tracking-widest2 text-muted">{title}</div>
       {steps.map((s, i) => (
-        <motion.div
+        <div
           key={s.step}
-          initial={{ opacity: 0, x: -18 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-15%" }}
-          transition={{ duration: 0.55, ease: EASE, delay: 0.25 + i * 0.14 }}
-          className="group relative flex gap-4 rounded-xl border border-white/8 bg-black/30 p-4 transition-colors duration-300 hover:border-accent/40"
+          className={cn(
+            "reveal group relative flex gap-4 rounded-xl border border-white/8 bg-black/30 p-4 hover:border-accent/40",
+            seen && "reveal-in"
+          )}
+          style={{ "--rx": "-18px", "--ry": "0px", "--rd": `${0.25 + i * 0.14}s` } as React.CSSProperties}
         >
           <span className="font-mono text-[11px] font-bold leading-6 text-accent">{s.step}</span>
           <div className="min-w-0">
@@ -200,34 +229,33 @@ function ProcessList({ title, steps }: { title: string; steps: { step: string; t
             aria-hidden
             className="absolute left-0 top-1/2 h-6 w-[2px] -translate-y-1/2 rounded-full bg-accent/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           />
-        </motion.div>
+        </div>
       ))}
     </div>
   );
 }
 
 function Specs({ title, items }: { title: string; items: { label: string; value: string }[] }) {
+  const [ref, seen] = useInViewOnce<HTMLDivElement>("-15% 0px");
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={ref} className="flex flex-col gap-3">
       <div className="mb-1 font-mono text-[10px] uppercase tracking-widest2 text-muted">{title}</div>
       <div className="grid grid-cols-2 gap-3">
         {items.map((r, i) => (
-          <motion.div
+          <div
             key={r.label}
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-15%" }}
-            transition={{ duration: 0.55, ease: EASE, delay: 0.4 + i * 0.14 }}
-            className="rounded-xl border border-white/8 bg-black/30 p-4"
+            className={cn("reveal rounded-xl border border-white/8 bg-black/30 p-4", seen && "reveal-in")}
+            style={{ "--ry": "18px", "--rd": `${0.4 + i * 0.14}s` } as React.CSSProperties}
           >
             <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-widest2 text-muted">
               <span className="h-1 w-1 rounded-full bg-accent animate-pulse-led" />
               {r.label}
             </div>
-            <div className="mt-1.5 font-display text-base font-bold tracking-wide text-metal md:text-lg">
+            {/* words, not just numbers, since the price line became a sentence */}
+            <div className="mt-1.5 text-balance font-display text-base font-bold leading-snug tracking-wide text-metal">
               {r.value}
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>
@@ -248,6 +276,7 @@ function Screw({ className }: { className?: string }) {
 export function Experience() {
   const { t } = useLang();
   const reduced = useReducedMotion();
+  const [finishRef, finishSeen] = useInViewOnce<HTMLDivElement>("-10% 0px");
   const [punchLead, punchTail] = t.experience.punchline.split(" — ");
 
   return (
@@ -313,6 +342,7 @@ export function Experience() {
                 label={t.experience.tach.label}
                 hint={t.experience.tach.hint}
                 unit={t.experience.tach.unit}
+                ariaLabel={t.a11y.tach}
               />
 
               <Specs title={t.experience.specsTitle} items={t.experience.specs} />
@@ -322,12 +352,7 @@ export function Experience() {
       </Reveal>
 
       {/* finish line — inView on the wrapper, the line starts translated outside the overflow clip */}
-      <motion.div
-        className="relative mt-14 md:mt-20"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-10%" }}
-      >
+      <div ref={finishRef} className="relative mt-14 md:mt-20">
         {/* speed hairlines flanking the statement */}
         <div
           aria-hidden
@@ -339,11 +364,11 @@ export function Experience() {
         />
 
         <div className="overflow-hidden">
-          <motion.p
-            key={t.experience.punchline}
-            variants={{ hidden: { y: "110%" }, visible: { y: "0%" } }}
-            transition={{ duration: 0.9, ease: EASE }}
-            className="text-center font-display text-3xl font-bold uppercase tracking-tight text-metal md:text-5xl"
+          <p
+            className={cn(
+              "rise text-center font-display text-3xl font-bold uppercase tracking-tight text-metal md:text-5xl",
+              finishSeen && "rise-in"
+            )}
           >
             {punchLead}
             {punchTail && (
@@ -352,29 +377,33 @@ export function Experience() {
                 <span className="text-accent-glow">{punchTail}</span>
               </>
             )}
-          </motion.p>
+          </p>
         </div>
 
         {/* speed streak */}
-        <motion.div
+        <div
           aria-hidden
-          variants={{ hidden: { scaleX: 0, opacity: 0 }, visible: { scaleX: 1, opacity: 1 } }}
-          transition={{ duration: 1.1, delay: 0.35, ease: EASE }}
-          className="mx-auto mt-6 h-[3px] w-44 origin-left rounded-full bg-gradient-to-r from-accent via-accent to-transparent shadow-[0_0_18px_var(--glow)] md:w-60"
+          className={cn(
+            "reveal mx-auto mt-6 h-[3px] w-44 origin-left rounded-full bg-gradient-to-r from-accent via-accent to-transparent shadow-[0_0_18px_var(--glow)] md:w-60",
+            finishSeen && "reveal-in"
+          )}
+          style={{ "--ry": "0px", "--rs": "0.001", "--rd": "0.35s" } as React.CSSProperties}
         />
 
         {/* checkered finish strip */}
-        <motion.div
+        <div
           aria-hidden
-          variants={{ hidden: { opacity: 0 }, visible: { opacity: 0.35 } }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="mx-auto mt-3 h-2 w-28 [mask-image:linear-gradient(90deg,transparent,black_25%,black_75%,transparent)] md:w-36"
+          className={cn(
+            "mx-auto mt-3 h-2 w-28 opacity-0 transition-opacity duration-700 [mask-image:linear-gradient(90deg,transparent,black_25%,black_75%,transparent)] md:w-36",
+            finishSeen && "!opacity-35"
+          )}
           style={{
             backgroundImage: "repeating-conic-gradient(rgba(255,255,255,0.9) 0% 25%, transparent 0% 50%)",
             backgroundSize: "8px 8px",
+            transitionDelay: "0.6s",
           }}
         />
-      </motion.div>
+      </div>
     </section>
   );
 }

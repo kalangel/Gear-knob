@@ -16,6 +16,12 @@ export const GEARS: GearSection[] = [
 ];
 
 export const SITE = {
+  /**
+   * Canonical origin — every absolute URL (canonical, hreflang, og:image) is
+   * built from this one value. Change it here when the domain changes; nothing
+   * else in the codebase hardcodes a host.
+   */
+  url: "https://kyrylo-polinkevych.vercel.app",
   name: "Kyrylo Polinkevych",
   logo: "K—P",
   email: "polkyrylo@gmail.com",

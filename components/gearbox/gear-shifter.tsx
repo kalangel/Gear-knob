@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useMotionValue, useReducedMotion } from "framer-motion";
+import { useLang } from "@/components/language-context";
 import { cn } from "@/lib/utils";
-import { type Gear } from "@/lib/data";
+import { GEARS, type Gear } from "@/lib/data";
 
 /** Top-down H-pattern gate, SVG user units. */
 const SLOT: Record<Gear, { x: number; y: number }> = {
@@ -16,22 +17,50 @@ const SLOT: Record<Gear, { x: number; y: number }> = {
   N: { x: 150, y: 170 },
 };
 
+const VB_W = 300;
+const VB_H = 340;
 const NEUTRAL_Y = 170;
 const SLOT_W = 30;
+
+/** The gate as the hand knows it: [column][row]. Arrow keys walk this grid. */
+const GATE: Exclude<Gear, "N">[][] = [
+  ["1", "2"],
+  ["3", "4"],
+  ["5", "R"],
+];
+const SELECTABLE = GATE.flat();
+
+function gridPos(g: Gear): [number, number] {
+  for (let c = 0; c < GATE.length; c++) {
+    const r = GATE[c].indexOf(g as Exclude<Gear, "N">);
+    if (r !== -1) return [c, r];
+  }
+  return [1, 0];
+}
 
 interface GearShifterProps {
   active: Gear;
   onShift?: (gear: Gear) => void;
   className?: string;
   labelled?: boolean;
+  /** HUD-sized instance: pointer-precise, skips the 44px touch minimum. */
+  compact?: boolean;
 }
 
-export function GearShifter({ active, onShift, className, labelled = true }: GearShifterProps) {
+export function GearShifter({
+  active,
+  onShift,
+  className,
+  labelled = true,
+  compact = false,
+}: GearShifterProps) {
   const reduced = useReducedMotion();
+  const { t } = useLang();
   const x = useMotionValue(SLOT[active].x);
   const y = useMotionValue(SLOT[active].y);
   const prev = useRef<Gear>(active);
   const [shifting, setShifting] = useState(false);
+  const cells = useRef(new Map<Gear, HTMLButtonElement>());
 
   useEffect(() => {
     if (prev.current === active) return;
@@ -94,13 +123,57 @@ export function GearShifter({ active, onShift, className, labelled = true }: Gea
     };
   }, [active, reduced, x, y]);
 
+  /** Arrow keys walk the gate; the gear engages as soon as it is reached. */
+  const onKeyDown = (e: React.KeyboardEvent, g: Exclude<Gear, "N">) => {
+    if (!onShift) return;
+    let [c, r] = gridPos(g);
+    switch (e.key) {
+      case "ArrowLeft":
+        c = Math.max(0, c - 1);
+        break;
+      case "ArrowRight":
+        c = Math.min(GATE.length - 1, c + 1);
+        break;
+      case "ArrowUp":
+        r = 0;
+        break;
+      case "ArrowDown":
+        r = 1;
+        break;
+      case "Home":
+        c = 0;
+        r = 0;
+        break;
+      case "End":
+        c = GATE.length - 1;
+        r = 1;
+        break;
+      default:
+        return; // Enter / Space fall through to the button's own click
+    }
+    e.preventDefault();
+    const next = GATE[c][r];
+    if (next === g) return;
+    cells.current.get(next)?.focus();
+    onShift(next);
+  };
+
+  const gateLabel = t.a11y.gate.replace("{gear}", active === "N" ? t.hud.neutral : active);
+
+  const cellLabel = (g: Exclude<Gear, "N">) => {
+    const section = GEARS.find((s) => s.gear === g);
+    const name = section ? t.nav[section.id] : "";
+    return g === "R"
+      ? t.a11y.gateReverse.replace("{section}", name)
+      : t.a11y.gateOption.replace("{gear}", g).replace("{section}", name);
+  };
+
   return (
     <div className={cn("relative select-none", className)}>
       <svg
-        viewBox="0 0 300 340"
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
         className="h-auto w-full"
-        role="group"
-        aria-label={`Gear selector, current gear ${active}`}
+        {...(onShift ? { "aria-hidden": true } : { role: "img", "aria-label": gateLabel })}
       >
         <defs>
           <linearGradient id="gs-plate" x1="0" y1="0" x2="0" y2="1">
@@ -181,7 +254,7 @@ export function GearShifter({ active, onShift, className, labelled = true }: Gea
           textAnchor="middle"
           fontSize="6.5"
           fontFamily="var(--font-mono)"
-          fill="#4a4f58"
+          fill="var(--etch)"
           letterSpacing="3"
         >
           PRECISION 6-SPEED
@@ -237,49 +310,27 @@ export function GearShifter({ active, onShift, className, labelled = true }: Gea
 
         {/* Gear labels */}
         {labelled &&
-          (Object.keys(SLOT) as Gear[])
-            .filter((g) => g !== "N")
-            .map((g) => {
-              const s = SLOT[g];
-              const isTop = s.y < NEUTRAL_Y;
-              const isActive = active === g;
-              return (
-                <text
-                  key={g}
-                  x={s.x}
-                  y={isTop ? s.y - 28 : s.y + 40}
-                  textAnchor="middle"
-                  fontSize="19"
-                  fontWeight="700"
-                  fontFamily="var(--font-mono)"
-                  fill={isActive ? (g === "R" ? "var(--accent-red)" : "var(--accent)") : "#5d626c"}
-                  filter={isActive ? "url(#gs-glow)" : undefined}
-                  style={{ transition: "fill 0.4s" }}
-                >
-                  {g}
-                </text>
-              );
-            })}
-
-        {/* Click targets */}
-        {onShift &&
-          (Object.keys(SLOT) as Gear[])
-            .filter((g) => g !== "N")
-            .map((g) => (
-              <circle
-                key={`hit-${g}`}
-                cx={SLOT[g].x}
-                cy={SLOT[g].y}
-                r="30"
-                fill="transparent"
-                className="cursor-pointer"
-                role="button"
-                tabIndex={0}
-                aria-label={`Shift to gear ${g}`}
-                onClick={() => onShift(g)}
-                onKeyDown={(e) => e.key === "Enter" && onShift(g)}
-              />
-            ))}
+          SELECTABLE.map((g) => {
+            const s = SLOT[g];
+            const isTop = s.y < NEUTRAL_Y;
+            const isActive = active === g;
+            return (
+              <text
+                key={g}
+                x={s.x}
+                y={isTop ? s.y - 28 : s.y + 40}
+                textAnchor="middle"
+                fontSize="19"
+                fontWeight="700"
+                fontFamily="var(--font-mono)"
+                fill={isActive ? (g === "R" ? "var(--accent-red)" : "var(--accent)") : "var(--dial-mark)"}
+                filter={isActive ? "url(#gs-glow)" : undefined}
+                style={{ transition: "fill 0.4s" }}
+              >
+                {g}
+              </text>
+            );
+          })}
 
         {/* Lever knob (top-down) */}
         <motion.g style={{ x, y }}>
@@ -307,6 +358,44 @@ export function GearShifter({ active, onShift, className, labelled = true }: Gea
           </motion.g>
         </motion.g>
       </svg>
+
+      {/*
+        Real buttons over the plate, not <circle role="button">: tap targets on
+        touch, roving tab stop and arrow keys on a keyboard, and a focus ring
+        the browser draws for us. No dragging — a tap engages the gear, so the
+        page keeps scrolling under the finger.
+      */}
+      {onShift && (
+        <div
+          className="absolute inset-0"
+          role="group"
+          aria-label={gateLabel}
+        >
+          {SELECTABLE.map((g) => (
+            <button
+              key={g}
+              type="button"
+              ref={(el) => {
+                if (el) cells.current.set(g, el);
+                else cells.current.delete(g);
+              }}
+              onClick={() => onShift(g)}
+              onKeyDown={(e) => onKeyDown(e, g)}
+              tabIndex={active === g || (active === "N" && g === "1") ? 0 : -1}
+              aria-current={active === g ? "true" : undefined}
+              aria-label={cellLabel(g)}
+              className={cn(
+                "absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors duration-300 hover:bg-white/[0.06]",
+                compact ? "h-[16%] w-[18%]" : "h-[19%] min-h-11 w-[22%] min-w-11"
+              )}
+              style={{
+                left: `${(SLOT[g].x / VB_W) * 100}%`,
+                top: `${(SLOT[g].y / VB_H) * 100}%`,
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

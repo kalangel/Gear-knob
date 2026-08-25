@@ -1,15 +1,16 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { FlaskConical, Sparkles, Waves } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useLang } from "@/components/language-context";
-import { EASE } from "@/lib/motion";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
+import { cn } from "@/lib/utils";
 
 const ICONS = [Waves, Sparkles, FlaskConical];
 
 export function Playground() {
   const { t } = useLang();
+  const [cardsRef, cardsSeen] = useInViewOnce<HTMLDivElement>("-10% 0px");
 
   return (
     <section id="playground" className="relative scroll-mt-24 overflow-hidden py-20 md:py-28">
@@ -25,13 +26,13 @@ export function Playground() {
 
       {/* marquee */}
       <div className="relative mb-12 -rotate-1 border-y border-accent-red/20 bg-accent-red/5 py-4" aria-hidden>
-        <div className="flex w-max animate-marquee gap-10 whitespace-nowrap font-mono text-xs uppercase tracking-widest2 text-accent-red/80">
+        <div className="flex w-max animate-marquee gap-10 whitespace-nowrap font-mono text-xs uppercase tracking-widest2 text-accent-red">
           {Array.from({ length: 2 }).map((_, half) => (
             <span key={half} className="flex gap-10">
               {Array.from({ length: 8 }).map((_, i) => (
                 <span key={i} className="flex items-center gap-10">
-                  {t.playground.marquee[0]} <span className="text-white/30">///</span>{" "}
-                  {t.playground.marquee[1]} <span className="text-white/30">///</span>
+                  {t.playground.marquee[0]} <span className="text-white/60">///</span>{" "}
+                  {t.playground.marquee[1]} <span className="text-white/60">///</span>
                 </span>
               ))}
             </span>
@@ -42,28 +43,33 @@ export function Playground() {
       <div className="mx-auto max-w-6xl px-6">
         <SectionHeading gear="R" eyebrow={t.playground.eyebrow} title={t.playground.title} />
 
-        <div className="grid gap-5 md:grid-cols-3">
+        <div ref={cardsRef} className="grid gap-5 md:grid-cols-3">
           {t.playground.items.map(({ title, text }, i) => {
             const Icon = ICONS[i % ICONS.length];
             return (
-              <motion.div
+              <div
                 key={title}
-                initial={{ opacity: 0, y: 40, rotate: i % 2 ? 1.5 : -1.5 }}
-                whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-                viewport={{ once: true, margin: "-10%" }}
-                transition={{ duration: 0.8, ease: EASE, delay: i * 0.12 }}
-                whileHover={{ y: -8, rotate: i % 2 ? -1 : 1 }}
-                className="sheen group rounded-3xl border border-accent-red/15 bg-gradient-to-b from-[#16090b] to-carbon p-8 transition-colors duration-500 hover:border-accent-red/40"
+                className={cn(
+                  "reveal sheen group rounded-3xl border border-accent-red/15 bg-gradient-to-b from-[#16090b] to-carbon p-8 hover:border-accent-red/40",
+                  cardsSeen && "reveal-in"
+                )}
+                style={
+                  {
+                    "--ry": "40px",
+                    "--rot": i % 2 ? "1.5deg" : "-1.5deg",
+                    "--rd": `${i * 0.12}s`,
+                  } as React.CSSProperties
+                }
               >
                 <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-accent-red/25 text-accent-red transition-shadow duration-500 group-hover:shadow-[0_0_28px_var(--glow-red)]">
                   <Icon className="h-5 w-5" strokeWidth={1.5} />
                 </div>
                 <h3 className="font-display text-xl font-bold tracking-tight text-metal">{title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-silver">{text}</p>
-                <div className="mt-6 font-mono text-[10px] uppercase tracking-widest2 text-accent-red/60">
+                <div className="mt-6 font-mono text-[10px] uppercase tracking-widest2 text-accent-red">
                   {t.playground.footnote}
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

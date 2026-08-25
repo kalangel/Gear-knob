@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface MagneticProps {
@@ -13,10 +13,12 @@ interface MagneticProps {
 /** Wrapper that pulls its child toward the cursor. */
 export function Magnetic({ children, strength = 0.35, className }: MagneticProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
   const x = useSpring(useMotionValue(0), { stiffness: 180, damping: 14, mass: 0.3 });
   const y = useSpring(useMotionValue(0), { stiffness: 180, damping: 14, mass: 0.3 });
 
   const onMove = (e: React.MouseEvent) => {
+    if (reduced) return;
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();

@@ -6,7 +6,21 @@ import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from "@react-t
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { useLang } from "@/components/language-context";
 import { GEARS, type Gear } from "@/lib/data";
+
+/** Touch screens get taps, never drags — see the comment on startDrag. */
+function useCoarsePointer() {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const sync = () => setCoarse(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return coarse;
+}
 
 // Layout: H-gate on the XZ plane. x = column, z = row (-1 top, +1 bottom)
 const GX = 0.72; // column offset
@@ -149,6 +163,7 @@ function StickModel() {
 }
 
 function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void }) {
+  const coarse = useCoarsePointer();
   const stick = useRef<THREE.Group>(null!);
   const rig = useRef<THREE.Group>(null!);
 
@@ -357,7 +372,37 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
     return [e.ray.origin.x + e.ray.direction.x * t, e.ray.origin.z + e.ray.direction.z * t];
   };
 
+  /** Nearest gear to a point on the gate plane. */
+  const nearestSlot = (x: number, z: number): Gear => {
+    let best: Gear = prevGear.current;
+    let bestD = Infinity;
+    for (const g of Object.keys(SLOT) as Gear[]) {
+      const [sx, sz] = SLOT[g];
+      const dd = (sx - x) ** 2 + (sz - z) ** 2;
+      if (dd < bestD) {
+        bestD = dd;
+        best = g;
+      }
+    }
+    return best;
+  };
+
+  /**
+   * Touch: a tap engages the gear under the finger. Dragging the knob would
+   * mean swallowing vertical pointer moves, and the page has to keep scrolling
+   * under the thumb — so on a touch screen there is nothing to drag.
+   */
+  const tapShift = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    const [x, z] = clampToGate(e.point.x, e.point.z);
+    const best = nearestSlot(x, z);
+    route.current = [new THREE.Vector2(...SLOT[best])];
+    prevGear.current = best;
+    onShift(best);
+  };
+
   const startDrag = (e: ThreeEvent<PointerEvent>) => {
+    if (coarse) return tapShift(e);
     e.stopPropagation();
     (e.target as Element)?.setPointerCapture?.(e.pointerId);
     dragging.current = true;
@@ -371,6 +416,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   // Grab the lever itself (any height, including the knob): the knob follows
   // pointer *deltas*, so it doesn't jump to the projected hit point
   const startDragStick = (e: ThreeEvent<PointerEvent>) => {
+    if (coarse) return; // let the tap fall through to the gate plate below
     e.stopPropagation();
     (e.target as Element)?.setPointerCapture?.(e.pointerId);
     dragging.current = true;
@@ -384,7 +430,7 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   };
 
   const moveDrag = (e: ThreeEvent<PointerEvent>) => {
-    if (!dragging.current) return;
+    if (coarse || !dragging.current) return;
     if (stickGrab.current) {
       const [px, pz] = rayAtY(e, grabY.current);
       const [x, z] = clampToGate(
@@ -399,22 +445,13 @@ function Gearbox({ active, onShift }: { active: Gear; onShift: (g: Gear) => void
   };
 
   const endDrag = () => {
-    if (!dragging.current) return;
+    if (coarse || !dragging.current) return;
     dragging.current = false;
     stickGrab.current = false;
     document.body.style.cursor = "";
     // Snap into the nearest slot and report it up; the knob stays there
     // until the scroll-driven gear actually changes again.
-    let best: Gear = prevGear.current;
-    let bestD = Infinity;
-    for (const g of Object.keys(SLOT) as Gear[]) {
-      const [sx, sz] = SLOT[g];
-      const dd = (sx - dragPt.current.x) ** 2 + (sz - dragPt.current.y) ** 2;
-      if (dd < bestD) {
-        bestD = dd;
-        best = g;
-      }
-    }
+    const best = nearestSlot(dragPt.current.x, dragPt.current.y);
     route.current = [new THREE.Vector2(...SLOT[best])];
     prevGear.current = best;
     onShift(best);
@@ -542,6 +579,8 @@ export interface Shifter3DProps {
 
 export function Shifter3D({ active, onShift, className }: Shifter3DProps) {
   const wrap = useRef<HTMLDivElement>(null);
+  const coarse = useCoarsePointer();
+  const { t } = useLang();
   const [inView, setInView] = useState(true);
 
   // Stop the render loop entirely when scrolled out of sight
@@ -556,10 +595,17 @@ export function Shifter3D({ active, onShift, className }: Shifter3DProps) {
   }, []);
 
   return (
-    <div ref={wrap} className={className} style={{ aspectRatio: "15 / 16" }}>
+    <div
+      ref={wrap}
+      className={className}
+      style={{ aspectRatio: "15 / 16" }}
+      role="img"
+      aria-label={t.a11y.gate.replace("{gear}", active === "N" ? t.hud.neutral : active)}
+    >
       <Canvas
         frameloop={inView ? "always" : "never"}
-        style={{ touchAction: "none" }}
+        // pan-y on touch: taps shift, vertical swipes still scroll the page
+        style={{ touchAction: coarse ? "pan-y" : "none" }}
         dpr={[1, 1.75]}
         camera={{ position: [0, 3.1, 6.6], fov: 30 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}

@@ -16,7 +16,8 @@ const config: Config = {
         gunmetal: "#282c34",
         chrome: "#d3d7de",
         silver: "#a9afba",
-        muted: "#7e8592",
+        /* 6.4:1 on --bg, 6.0:1 on .glass — the small mono caps live here */
+        muted: "#8b929f",
         accent: {
           DEFAULT: "#4da2ff",
           dim: "rgba(77,162,255,0.14)",

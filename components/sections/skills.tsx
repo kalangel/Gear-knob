@@ -1,15 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Reveal } from "@/components/ui/reveal";
 import { Gauge } from "@/components/gearbox/gauge";
 import { useLang } from "@/components/language-context";
+import { useInViewOnce } from "@/hooks/use-in-view-once";
 import { SKILLS, MODULES } from "@/lib/data";
-import { EASE } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 export function Skills() {
   const { t } = useLang();
+  const [gaugesRef, gaugesSeen] = useInViewOnce<HTMLDivElement>("-10% 0px");
+  const [chipsRef, chipsSeen] = useInViewOnce<HTMLDivElement>();
 
   return (
     <section id="skills" className="relative scroll-mt-24 py-20 md:py-28">
@@ -28,17 +30,15 @@ export function Skills() {
                 <span className="hidden sm:block">{t.skills.diagnostics}</span>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div ref={gaugesRef} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {SKILLS.map((s, i) => (
-                  <motion.div
+                  <div
                     key={s.name}
-                    initial={{ opacity: 0, y: 28 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-10%" }}
-                    transition={{ duration: 0.7, ease: EASE, delay: i * 0.08 }}
+                    className={cn("reveal", gaugesSeen && "reveal-in")}
+                    style={{ "--ry": "28px", "--rd": `${i * 0.08}s` } as React.CSSProperties}
                   >
                     <Gauge label={s.name} value={s.value} unit={t.skills.unit} />
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
@@ -47,19 +47,19 @@ export function Skills() {
                 <div className="mb-5 font-mono text-[10px] uppercase tracking-widest2 text-muted">
                   {t.skills.modules}
                 </div>
-                <div className="flex flex-wrap gap-2.5">
+                <div ref={chipsRef} className="flex flex-wrap gap-2.5">
                   {MODULES.map((m, i) => (
-                    <motion.span
+                    <span
                       key={m}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, ease: EASE, delay: 0.3 + i * 0.05 }}
-                      className="group flex cursor-default items-center gap-2 rounded-full border border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-silver transition-colors duration-300 hover:border-accent/50 hover:text-white"
+                      className={cn(
+                        "reveal group flex cursor-default items-center gap-2 rounded-full border border-white/10 px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-silver transition-colors duration-300 hover:border-accent/50 hover:text-white",
+                        chipsSeen && "reveal-in"
+                      )}
+                      style={{ "--ry": "0px", "--rs": "0.9", "--rd": `${0.3 + i * 0.05}s` } as React.CSSProperties}
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-accent/70 transition-shadow duration-300 group-hover:shadow-[0_0_10px_var(--glow)]" />
                       {m}
-                    </motion.span>
+                    </span>
                   ))}
                 </div>
               </div>

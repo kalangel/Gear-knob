@@ -15,6 +15,28 @@ export interface Dict {
     playground: string;
   };
   hud: { gear: string; neutral: string };
+  /** Screen-reader / control labels — never rendered as visible copy. */
+  a11y: {
+    navGroup: string;
+    gate: string;
+    /** {gear} + {section} placeholders */
+    gateOption: string;
+    gateReverse: string;
+    tach: string;
+    /** {label} + {value} placeholders */
+    gauge: string;
+    langGroup: string;
+    modeGroup: string;
+  };
+  /** Darstellung: flat engraved gate (default) vs. the 3D chrome lever. */
+  mode: {
+    group: string;
+    flat: string;
+    solid: string;
+    flatLabel: string;
+    solidLabel: string;
+    locked: string;
+  };
   hero: {
     role: string;
     lines: [string, string];
@@ -37,7 +59,7 @@ export interface Dict {
   projects: SectionCopy & {
     descriptions: string[];
     visit: string;
-    offer: { lead: string; price: string; cta: string };
+    offer: { lead: string; terms: string; cta: string };
   };
   experience: SectionCopy & {
     board: string;
@@ -87,6 +109,24 @@ export const DICT = {
       playground: "Playground",
     },
     hud: { gear: "Gang", neutral: "Leerlauf" },
+    a11y: {
+      navGroup: "Ganganwahl — Navigation",
+      gate: "Schaltkulisse — eingelegter Gang: {gear}",
+      gateOption: "{gear}. Gang einlegen — {section}",
+      gateReverse: "Rückwärtsgang einlegen — {section}",
+      tach: "Drehzahlmesser — zeigt die Scroll-Geschwindigkeit",
+      gauge: "{label}: {value} von 100",
+      langGroup: "Sprache",
+      modeGroup: "Darstellung der Schaltkulisse",
+    },
+    mode: {
+      group: "Darstellung",
+      flat: "Flach",
+      solid: "3D",
+      flatLabel: "Flache Schaltkulisse — Ansicht von oben",
+      solidLabel: "Plastische Schaltkulisse — Chromhebel in 3D",
+      locked: "3D ist deaktiviert: Ihr System fordert reduzierte Bewegung.",
+    },
     hero: {
       role: "Frontend-Entwickler & UI/UX-Designer",
       lines: ["Präzision", "in Bewegung."],
@@ -131,7 +171,7 @@ export const DICT = {
       visit: "Live ansehen",
       offer: {
         lead: "Gefällt Ihnen einer dieser Auftritte? Ich adaptiere Design, Inhalte und Technik komplett auf Ihr Unternehmen —",
-        price: "ab 690 €",
+        terms: "Festpreis nach Briefing.",
         cta: "Projekt anfragen",
       },
     },
@@ -172,8 +212,8 @@ export const DICT = {
       specs: [
         { label: "Lieferzeit", value: "7–14 Tage" },
         { label: "Erste Antwort", value: "< 24 h" },
-        { label: "Korrekturen", value: "Inklusive" },
-        { label: "Startpreis", value: "ab 690 €" },
+        { label: "Korrekturen", value: "Zwei Runden inklusive" },
+        { label: "Startpreis", value: "Festpreis nach Briefing" },
       ],
       punchline: "Vom Briefing zum Launch — in unter zwei Wochen.",
     },
@@ -232,6 +272,24 @@ export const DICT = {
       playground: "Полигон",
     },
     hud: { gear: "Передача", neutral: "Нейтраль" },
+    a11y: {
+      navGroup: "Выбор передачи — навигация",
+      gate: "Кулиса переключения — включена передача: {gear}",
+      gateOption: "Включить {gear}-ю передачу — {section}",
+      gateReverse: "Включить задний ход — {section}",
+      tach: "Тахометр — показывает скорость прокрутки",
+      gauge: "{label}: {value} из 100",
+      langGroup: "Язык",
+      modeGroup: "Отображение кулисы",
+    },
+    mode: {
+      group: "Вид",
+      flat: "Плоский",
+      solid: "3D",
+      flatLabel: "Плоская кулиса — вид сверху",
+      solidLabel: "Объёмная кулиса — хромированный рычаг в 3D",
+      locked: "3D выключен: система просит уменьшить движение.",
+    },
     hero: {
       role: "Frontend-разработчик и UI/UX-дизайнер",
       lines: ["Точность", "в движении."],
@@ -271,7 +329,7 @@ export const DICT = {
       visit: "Смотреть вживую",
       offer: {
         lead: "Понравился один из этих сайтов? Полностью адаптирую дизайн, контент и техническую часть под ваш бизнес —",
-        price: "от 690 €",
+        terms: "фикс-цена после брифа.",
         cta: "Обсудить проект",
       },
     },
@@ -312,8 +370,8 @@ export const DICT = {
       specs: [
         { label: "Срок", value: "7–14 дней" },
         { label: "Первый ответ", value: "до 24 ч" },
-        { label: "Правки", value: "Включены" },
-        { label: "Старт", value: "от 690 €" },
+        { label: "Правки", value: "Два круга включены" },
+        { label: "Старт", value: "Фикс-цена после брифа" },
       ],
       punchline: "От брифа до запуска — меньше двух недель.",
     },

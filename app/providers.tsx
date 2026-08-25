@@ -5,18 +5,18 @@ import { CursorGlow } from "@/components/effects/cursor-glow";
 import { Noise } from "@/components/effects/noise";
 import { GearHud } from "@/components/gearbox/gear-hud";
 import { LanguageProvider } from "@/components/language-context";
-import { PerfProvider, usePerf } from "@/components/perf-context";
+import { DisplayModeProvider, useDisplayMode } from "@/components/display-mode";
 
 function Shell({ children }: { children: React.ReactNode }) {
-  const { eco } = usePerf();
+  const { flat } = useDisplayMode();
   return (
-    // In eco mode, kill JS transform animations entirely — the biggest CPU win.
-    <MotionConfig reducedMotion={eco ? "always" : "user"}>
+    // "user" — the OS setting decides whether framer animates at all.
+    <MotionConfig reducedMotion="user">
       {children}
-      {/* Full-screen overlays (cursor glow, film grain) — expensive on weak GPUs */}
-      {!eco && <CursorGlow />}
+      {/* Full-screen overlays (cursor glow, film grain): the plastic mode only */}
+      {!flat && <CursorGlow />}
       <GearHud />
-      {!eco && <Noise />}
+      {!flat && <Noise />}
     </MotionConfig>
   );
 }
@@ -24,9 +24,9 @@ function Shell({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LanguageProvider>
-      <PerfProvider>
+      <DisplayModeProvider>
         <Shell>{children}</Shell>
-      </PerfProvider>
+      </DisplayModeProvider>
     </LanguageProvider>
   );
 }

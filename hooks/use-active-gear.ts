@@ -45,8 +45,20 @@ export function useActiveGear(): Gear {
   return gear;
 }
 
-export function scrollToGear(gear: Gear) {
+/**
+ * Engage a gear = scroll to its section. `null` (or "N") goes back to idle,
+ * i.e. the top of the page. Smooth scrolling is itself motion, so it is off
+ * when the system asks for less of it.
+ */
+export function scrollToGear(gear: Gear | null) {
+  const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+  if (!gear || gear === "N") {
+    window.scrollTo({ top: 0, behavior });
+    return;
+  }
   const target = GEARS.find((g) => g.gear === gear);
   if (!target) return;
-  document.getElementById(target.id)?.scrollIntoView({ behavior: "smooth" });
+  document.getElementById(target.id)?.scrollIntoView({ behavior });
 }
